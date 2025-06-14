@@ -64,15 +64,16 @@
     let w, h;
     let planets = [];
     const planetData = [
-    { name: "Mercury", color: "#aaa", radius: 40, size: 30, speed: 0.03 },
-    { name: "Venus", color: "#e0c185", radius: 60, size: 50, speed: 0.025 },
-    { name: "Earth", color: "#3fa9f5", radius: 80, size: 60, speed: 0.02 },
-    { name: "Mars", color: "#f76b3c", radius: 100, size: 40, speed: 0.018 },
-    { name: "Jupiter", color: "#d9b37c", radius: 130, size: 100, speed: 0.012 },
-    { name: "Saturn", color: "#ffe8a3", radius: 160, size: 90, speed: 0.01 },
-    { name: "Uranus", color: "#88f0f0", radius: 190, size: 70, speed: 0.008 },
-    { name: "Neptune", color: "#476bff", radius: 220, size: 70, speed: 0.006 }
+    { name: "Mercury", color: "#aaa", radius: 40 * 5, size: 5 * 3, speed: 0.03 },
+    { name: "Venus", color: "#e0c185", radius: 60 * 5, size: 5 * 5, speed: 0.025 },
+    { name: "Earth", color: "#3fa9f5", radius: 80 * 5, size: 5 * 6, speed: 0.02 },
+    { name: "Mars", color: "#f76b3c", radius: 100 * 5, size: 5 * 4, speed: 0.018 },
+    { name: "Jupiter", color: "#d9b37c", radius: 130 * 5, size: 5 * 10, speed: 0.012 },
+    { name: "Saturn", color: "#ffe8a3", radius: 160 * 5, size: 5 * 9, speed: 0.01 },
+    { name: "Uranus", color: "#88f0f0", radius: 190 * 5, size: 5 * 7, speed: 0.008 },
+    { name: "Neptune", color: "#476bff", radius: 220 * 5, size: 5 * 7, speed: 0.006 }
   ];
+
 
     function init() {
       w = canvas.width = window.innerWidth;
@@ -120,7 +121,7 @@
 
       // Mặt trời
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, 20 * 5, 0, Math.PI * 2);
       ctx.fillStyle = "yellow";
       ctx.fill();
 

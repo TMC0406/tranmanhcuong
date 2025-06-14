@@ -52,22 +52,33 @@
   <canvas id="stars"></canvas>
 
   <div class="overlay">
-    <div class="title">Welcome to the galaxy</div>
+    <div class="title">Hệ mặt trời chuyển động</div>
     <div id="clock">00:00:00</div>
   </div>
 
   <script>
-    // ⭐️ Star animation (simple starfield)
     const canvas = document.getElementById("stars");
     const ctx = canvas.getContext("2d");
 
     let stars = [];
     let w, h;
+    let planets = [];
+    const planetData = [
+      { name: "Mercury", color: "#aaa", radius: 40, size: 3, speed: 0.03 },
+      { name: "Venus", color: "#e0c185", radius: 60, size: 5, speed: 0.025 },
+      { name: "Earth", color: "#3fa9f5", radius: 80, size: 6, speed: 0.02 },
+      { name: "Mars", color: "#f76b3c", radius: 100, size: 4, speed: 0.018 },
+      { name: "Jupiter", color: "#d9b37c", radius: 130, size: 10, speed: 0.012 },
+      { name: "Saturn", color: "#ffe8a3", radius: 160, size: 9, speed: 0.01 },
+      { name: "Uranus", color: "#88f0f0", radius: 190, size: 7, speed: 0.008 },
+      { name: "Neptune", color: "#476bff", radius: 220, size: 7, speed: 0.006 }
+    ];
 
-    function initStars() {
+    function init() {
       w = canvas.width = window.innerWidth;
       h = canvas.height = window.innerHeight;
       stars = [];
+      planets = [];
 
       for (let i = 0; i < 300; i++) {
         stars.push({
@@ -78,10 +89,19 @@
           dy: (Math.random() - 0.5) * 0.5
         });
       }
+
+      for (let planet of planetData) {
+        planets.push({
+          ...planet,
+          angle: Math.random() * Math.PI * 2
+        });
+      }
     }
 
-    function drawStars() {
+    function draw() {
       ctx.clearRect(0, 0, w, h);
+
+      // Draw stars
       ctx.fillStyle = "white";
       for (let star of stars) {
         ctx.beginPath();
@@ -94,17 +114,46 @@
         if (star.x < 0 || star.x > w) star.dx *= -1;
         if (star.y < 0 || star.y > h) star.dy *= -1;
       }
-      requestAnimationFrame(drawStars);
+
+      const centerX = w / 2;
+      const centerY = h / 2;
+
+      // Mặt trời
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = "yellow";
+      ctx.fill();
+
+      // Vẽ và cập nhật hành tinh
+      for (let p of planets) {
+        const x = centerX + Math.cos(p.angle) * p.radius;
+        const y = centerY + Math.sin(p.angle) * p.radius;
+
+        // Orbit path
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, p.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.05)";
+        ctx.stroke();
+
+        // Planet
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+
+        // Di chuyển
+        p.angle += p.speed;
+      }
+
+      requestAnimationFrame(draw);
     }
 
-    window.addEventListener("resize", initStars);
+    window.addEventListener("resize", init);
+    init();
+    draw();
 
-    initStars();
-    drawStars();
-
-    // 🕒 Clock (real-time)
+    // Đồng hồ
     const clock = document.getElementById("clock");
-
     function updateClock() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, "0");
@@ -112,7 +161,6 @@
       const s = String(now.getSeconds()).padStart(2, "0");
       clock.textContent = `${h}:${m}:${s}`;
     }
-
     setInterval(updateClock, 1000);
     updateClock();
   </script>

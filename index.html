@@ -3,45 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vũ trụ & Đồng hồ</title>
+  <title>Hệ Ngân Hà chuyển động</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
       height: 100%;
+      overflow: hidden;
       background: black;
       font-family: 'Segoe UI', sans-serif;
       color: white;
     }
 
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: url('https://images.unsplash.com/photo-1477201379323-186ec5a4e4e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;
+      z-index: -2;
+      filter: brightness(0.3) blur(2px);
+    }
+
     canvas {
-      position: absolute;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
       width: 100%;
       height: 100%;
-      display: block;
     }
 
     .overlay {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
+      transform: translate(-50%, -50%) rotate(0deg);
+      animation: spin 100s linear infinite;
       text-align: center;
+      z-index: 1;
       background: rgba(0, 0, 0, 0.4);
       padding: 2rem;
       border-radius: 12px;
       backdrop-filter: blur(4px);
     }
 
-    h1 {
-      font-size: 3rem;
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
       margin-bottom: 1rem;
     }
 
     #clock {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       font-weight: bold;
       letter-spacing: 3px;
     }
@@ -51,37 +69,51 @@
   <canvas id="stars"></canvas>
 
   <div class="overlay">
-    <h1>🌌 Vũ trụ chuyển động</h1>
+    <div class="title">🌌 Hệ Ngân Hà chuyển động</div>
     <div id="clock">00:00:00</div>
   </div>
 
   <script>
-    // ⭐️ Star animation (simple starfield)
     const canvas = document.getElementById("stars");
     const ctx = canvas.getContext("2d");
-
     let stars = [];
+    let shootingStars = [];
     let w, h;
 
-    function initStars() {
+    function init() {
       w = canvas.width = window.innerWidth;
       h = canvas.height = window.innerHeight;
       stars = [];
 
-      for (let i = 0; i < 300; i++) {
+      for (let i = 0; i < 250; i++) {
         stars.push({
           x: Math.random() * w,
           y: Math.random() * h,
           r: Math.random() * 1.5 + 0.5,
-          dx: (Math.random() - 0.5) * 0.5,
-          dy: (Math.random() - 0.5) * 0.5
+          dx: (Math.random() - 0.5) * 0.2,
+          dy: (Math.random() - 0.5) * 0.2
         });
       }
     }
 
-    function drawStars() {
+    function createShootingStar() {
+      if (Math.random() < 0.03) {
+        shootingStars.push({
+          x: Math.random() * w,
+          y: Math.random() * h * 0.5,
+          dx: -6 - Math.random() * 4,
+          dy: 3 + Math.random() * 2,
+          length: 200,
+          opacity: 1
+        });
+      }
+    }
+
+    function draw() {
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "white";
+
+      // stars
       for (let star of stars) {
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
@@ -93,15 +125,35 @@
         if (star.x < 0 || star.x > w) star.dx *= -1;
         if (star.y < 0 || star.y > h) star.dy *= -1;
       }
-      requestAnimationFrame(drawStars);
+
+      // shooting stars
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        let s = shootingStars[i];
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x + s.length, s.y - s.length * 0.5);
+        ctx.strokeStyle = `rgba(255,255,255,${s.opacity})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        s.x += s.dx;
+        s.y += s.dy;
+        s.opacity -= 0.02;
+
+        if (s.opacity <= 0) {
+          shootingStars.splice(i, 1);
+        }
+      }
+
+      createShootingStar();
+      requestAnimationFrame(draw);
     }
 
-    window.addEventListener("resize", initStars);
+    window.addEventListener("resize", init);
+    init();
+    draw();
 
-    initStars();
-    drawStars();
-
-    // 🕒 Clock (real-time)
+    // Đồng hồ thời gian thực
     const clock = document.getElementById("clock");
 
     function updateClock() {

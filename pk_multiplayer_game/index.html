@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini PK Multiplayer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div id="login-panel">
+    <h2>Đăng nhập</h2>
+    <input id="username-input" placeholder="Nhập tên của bạn" maxlength="16" />
+    <button id="login-btn">Vào game</button>
+  </div>
+  <div id="room-panel" style="display:none">
+    <h2>Chọn phòng</h2>
+    <button id="create-room-btn">Tạo phòng mới</button>
+    <div id="room-list"></div>
+  </div>
+  <div id="game-ui" style="display:none">
+    <div id="game-container"></div>
+    <div id="info-panel">
+      <div id="stats"></div>
+    </div>
+  </div>
+  <script src="firebase-config.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

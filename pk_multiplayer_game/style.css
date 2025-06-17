@@ -1,0 +1,196 @@
+body {
+  margin: 0;
+  background: #111;
+  font-family: sans-serif;
+  color: white;
+  text-align: center;
+}
+#title {
+  margin: 10px;
+}
+#game-container {
+  width: 800px;
+  height: 600px;
+  margin: 10px auto;
+  background: #222;
+  position: relative;
+  border: 3px solid #555;
+}
+#player, .enemy {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  background: none;
+  border: none;
+  box-sizing: border-box;
+  filter: drop-shadow(0 4px 8px #0008);
+  transition: transform 0.15s;
+}
+#player.right, .enemy.right {
+  transform: scaleX(1);
+}
+#player.left, .enemy.left {
+  transform: scaleX(-1);
+}
+#player .body, .enemy .body {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 14px;
+  height: 22px;
+  background: linear-gradient(180deg, #e55 60%, #a22 100%);
+  border-radius: 7px;
+  z-index: 1;
+  box-shadow: 0 2px 6px #0005;
+}
+.enemy .body { background: linear-gradient(180deg, #55e 60%, #227 100%); }
+#player .head, .enemy .head {
+  position: absolute;
+  left: 13px;
+  top: 2px;
+  width: 24px;
+  height: 20px;
+  background: radial-gradient(circle at 60% 40%, #ffe0b2 70%, #e0b080 100%);
+  border-radius: 50%;
+  z-index: 2;
+  border: 2px solid #fff3;
+  box-shadow: 0 2px 4px #0005;
+}
+#player .eye, .enemy .eye {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #222;
+  border-radius: 50%;
+  top: 10px;
+  left: 19px;
+  z-index: 3;
+}
+#player .eye.right, .enemy .eye.right {
+  left: 27px;
+}
+#player .arm.left, .enemy .arm.left {
+  position: absolute;
+  left: 0px;
+  top: 22px;
+  width: 14px;
+  height: 8px;
+  background: linear-gradient(90deg, #e55 60%, #a22 100%);
+  border-radius: 8px;
+  z-index: 0;
+  transition: transform 0.1s;
+  box-shadow: 0 1px 2px #0004;
+}
+.enemy .arm.left { background: linear-gradient(90deg, #55e 60%, #227 100%); }
+#player .arm.right, .enemy .arm.right {
+  position: absolute;
+  left: 36px;
+  top: 22px;
+  width: 14px;
+  height: 8px;
+  background: linear-gradient(90deg, #e55 60%, #a22 100%);
+  border-radius: 8px;
+  z-index: 0;
+  transition: transform 0.1s;
+  box-shadow: 0 1px 2px #0004;
+}
+.enemy .arm.right { background: linear-gradient(90deg, #55e 60%, #227 100%); }
+#player .leg.left, .enemy .leg.left {
+  position: absolute;
+  left: 15px;
+  top: 40px;
+  width: 8px;
+  height: 14px;
+  background: #333;
+  border-radius: 8px;
+  z-index: 0;
+  transition: transform 0.1s;
+  box-shadow: 0 1px 2px #0004;
+}
+#player .leg.right, .enemy .leg.right {
+  position: absolute;
+  left: 27px;
+  top: 40px;
+  width: 8px;
+  height: 14px;
+  background: #333;
+  border-radius: 8px;
+  z-index: 0;
+  transition: transform 0.1s;
+  box-shadow: 0 1px 2px #0004;
+}
+#player.moving .arm.left, .enemy.moving .arm.left {
+  transform: rotate(-30deg);
+}
+#player.moving .arm.right, .enemy.moving .arm.right {
+  transform: rotate(30deg);
+}
+#player.moving .leg.left, .enemy.moving .leg.left {
+  transform: rotate(20deg);
+}
+#player.moving .leg.right, .enemy.moving .leg.right {
+  transform: rotate(-20deg);
+}
+#player.moving.right .arm.left, .enemy.moving.right .arm.left,
+#player.moving.left .arm.left, .enemy.moving.left .arm.left {
+  animation: run-arm-left 0.3s infinite alternate;
+}
+#player.moving.right .arm.right, .enemy.moving.right .arm.right,
+#player.moving.left .arm.right, .enemy.moving.left .arm.right {
+  animation: run-arm-right 0.3s infinite alternate;
+}
+#player.moving.right .leg.left, .enemy.moving.right .leg.left,
+#player.moving.left .leg.left, .enemy.moving.left .leg.left {
+  animation: run-leg-left 0.3s infinite alternate;
+}
+#player.moving.right .leg.right, .enemy.moving.right .leg.right,
+#player.moving.left .leg.right, .enemy.moving.left .leg.right {
+  animation: run-leg-right 0.3s infinite alternate;
+}
+
+@keyframes run-arm-left {
+  0% { transform: rotate(-30deg); }
+  100% { transform: rotate(40deg); }
+}
+@keyframes run-arm-right {
+  0% { transform: rotate(30deg); }
+  100% { transform: rotate(-40deg); }
+}
+@keyframes run-leg-left {
+  0% { transform: rotate(20deg); }
+  100% { transform: rotate(-30deg); }
+}
+@keyframes run-leg-right {
+  0% { transform: rotate(-20deg); }
+  100% { transform: rotate(30deg); }
+}
+#info-panel {
+  margin-top: 10px;
+}
+#player .gun, .enemy .gun {
+  position: absolute;
+  width: 14px;
+  height: 6px;
+  background: linear-gradient(90deg, #444 60%, #222 100%);
+  border-radius: 2px;
+  top: 1px;
+  left: 10px;
+  box-shadow: 1px 1px 2px #0007;
+  z-index: 2;
+  border: 1px solid #222;
+}
+#player .arm.left .gun, .enemy .arm.left .gun {
+  left: 10px;
+}
+#player .arm.right .gun, .enemy .arm.right .gun {
+  left: 10px;
+}
+.bullet {
+  position: absolute;
+  width: 12px;
+  height: 6px;
+  background: linear-gradient(90deg, #ff0 60%, #fa0 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 6px 2px #ff0a;
+  z-index: 10;
+}

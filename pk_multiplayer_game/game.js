@@ -245,13 +245,14 @@ if (roomId && !window._playersListener) {
 function setupKeyListeners() {
   window.onkeydown = e => {
     keys[e.key] = true;
-    if (["a", "ArrowLeft"].includes(e.key)) direction = "left";
-    if (["d", "ArrowRight"].includes(e.key)) direction = "right";
-    if (["j", "0"].includes(e.key)) {
+    // Di chuyển cho mọi ngôn ngữ
+    if (["a", "ArrowLeft", "ф", "Ф", "щ", "Щ"].includes(e.key)) direction = "left";
+    if (["d", "ArrowRight", "в", "В"].includes(e.key)) direction = "right";
+    if (["j", "0", "о", "О"].includes(e.key)) {
       attack();
       shoot();
     }
-    if (e.key === "k") useSkill();
+    if (["k", "1", "л", "Л"].includes(e.key)) useSkill();
   };
   window.onkeyup = e => {
     keys[e.key] = false;
@@ -261,10 +262,11 @@ function setupKeyListeners() {
 function gameLoop() {
   let moved = false;
   let nextX = x, nextY = y;
-  if (keys["a"] || keys["ArrowLeft"]) { nextX -= 4; moved = true; direction = "left"; }
-  if (keys["d"] || keys["ArrowRight"]) { nextX += 4; moved = true; direction = "right"; }
-  if (keys["w"] || keys["ArrowUp"]) { nextY += 4; moved = true; }
-  if (keys["s"] || keys["ArrowDown"]) { nextY -= 4; moved = true; }
+  // Di chuyển cho mọi ngôn ngữ
+  if (keys["a"] || keys["ArrowLeft"] || keys["ф"] || keys["Ф"] || keys["щ"] || keys["Щ"]) { nextX -= 4; moved = true; direction = "left"; }
+  if (keys["d"] || keys["ArrowRight"] || keys["в"] || keys["В"]) { nextX += 4; moved = true; direction = "right"; }
+  if (keys["w"] || keys["ArrowUp"] || keys["ц"] || keys["Ц"]) { nextY += 4; moved = true; }
+  if (keys["s"] || keys["ArrowDown"] || keys["ы"] || keys["Ы"]) { nextY -= 4; moved = true; }
   // Lấy kích thước động của game-container
   const container = document.getElementById("game-container");
   const maxX = container ? container.clientWidth - 50 : 750;

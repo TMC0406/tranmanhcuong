@@ -194,3 +194,7 @@ body {
   box-shadow: 0 0 6px 2px #ff0a;
   z-index: 10;
 }
+.shield-circle {
+  pointer-events: none;
+  transition: opacity 0.3s, filter 0.3s;
+}

@@ -7,6 +7,8 @@ const MAX_HP = 200;  // Thêm hằng số cho máu tối đa
 const MAX_ENERGY = 10;  // Thêm hằng số cho năng lượng tối đa
 let keys = {}, bullets = [];
 let isDead = false;  // Thêm biến này
+let shield = 0; // Số lớp giáp hiện tại
+const MAX_SHIELD = 5;
 
 // Ẩn/hiện UI
 function showPanel(panel) {
@@ -53,7 +55,7 @@ createRoomBtn.onclick = () => {
     }
     if (!overlap) obstacles.push({ x, y, w, h });
   }
-  db.ref(`rooms/${newRoomId}`).set({ created: Date.now(), obstacles });
+  db.ref(`rooms/${newRoomId}`).set({ created: Date.now(), obstacles, players: {} });
   joinRoom(newRoomId);
 };
 
@@ -82,7 +84,12 @@ function loadRoomList() {
       }
     });
     if (rooms.length === 0) roomsContent.innerHTML = "Không có phòng nào.";
-    else roomsContent.innerHTML = rooms.map(r => `<div>${r} <button onclick=\"joinRoom('${r}')\">Tham gia</button></div>`).join("");
+    else roomsContent.innerHTML = rooms.map(r =>
+      `<div>${r} 
+        <button onclick=\"joinRoom('${r}')\">Tham gia</button>
+        <button onclick=\"deleteRoom('${r}')\" style='color:#fff;background:#c00;border:none;padding:4px 10px;border-radius:5px;margin-left:6px;cursor:pointer;'>Xóa phòng</button>
+      </div>`
+    ).join("");
   });
 }
 
@@ -190,7 +197,8 @@ window.joinRoom = function(rid) {
     name: userName, 
     attacking: false, 
     skill_ready: false, 
-    direction 
+    direction,
+    shield // Lưu trạng thái giáp lên firebase
   });
   
   // Thiết lập cleanup khi disconnect
@@ -311,8 +319,40 @@ function renderPlayers(snap) {
     div.appendChild(statsWrap);
     container.appendChild(div);
     
+    // Hiển thị số lớp giáp (cũ)
+    // const shieldDiv = document.createElement("div");
+    // shieldDiv.style.color = "#0ff";
+    // shieldDiv.style.fontSize = "10px";
+    // shieldDiv.style.textAlign = "center";
+    // shieldDiv.style.marginBottom = "1px";
+    // shieldDiv.style.textShadow = "0 0 2px #000";
+    // shieldDiv.textContent = data.shield ? `🛡️ x${data.shield}` : "";
+    // statsWrap.insertBefore(shieldDiv, nameDiv.nextSibling);
+
+    // Vẽ giáp dạng vòng tròn bao quanh nhân vật
+    if (data.shield && data.shield > 0) {
+      for (let i = 0; i < data.shield; i++) {
+        const shieldCircle = document.createElement("div");
+        shieldCircle.className = "shield-circle";
+        shieldCircle.style.position = "absolute";
+        shieldCircle.style.left = "-10px";
+        shieldCircle.style.top = "-10px";
+        shieldCircle.style.width = "70px";
+        shieldCircle.style.height = "70px";
+        shieldCircle.style.borderRadius = "50%";
+        shieldCircle.style.border = `2.5px solid #0ff`;
+        shieldCircle.style.boxSizing = "border-box";
+        shieldCircle.style.pointerEvents = "none";
+        shieldCircle.style.opacity = (0.18 + 0.18 * i).toFixed(2); // Lớp ngoài cùng mờ nhất
+        shieldCircle.style.zIndex = 10 + i;
+        shieldCircle.style.filter = `blur(${2 * (data.shield - i - 1)}px)`;
+        div.appendChild(shieldCircle);
+      }
+    }
+
     if (p.key === playerId) {
       currentPlayer = data;
+      shield = data.shield || 0;
       // Kiểm tra nếu người chơi hết máu thì tự động thoát phòng
       if (data.hp <= 0 && !isDead) {
         isDead = true;
@@ -394,11 +434,25 @@ function setupKeyListeners() {
       shoot();
     }
     if (["k", "1", "л", "Л"].includes(e.key)) useSkill();
+    // Tạo giáp khi bấm l hoặc 2
+    if (["l", "2", "д", "Д"].includes(e.key)) createShield();
   };
   window.onkeyup = e => {
     keys[e.key] = false;
   };
 }
+
+function createShield() {
+  if (shield < MAX_SHIELD && hp > 2 && energy >= 2) {
+    shield++;
+    hp -= 2;
+    energy -= 2;
+    playerRef.update({ shield, hp, energy });
+  }
+}
+
+let lastSentX = x, lastSentY = y, lastSentDir = direction;
+let lastUpdateTime = 0;
 
 function gameLoop() {
   let moved = false;
@@ -428,11 +482,15 @@ function gameLoop() {
   if (moved && !blocked) {
     x = nextX;
     y = nextY;
-    playerRef.update({ x, y, moving: true, direction });
-  } else if (moved) {
-    playerRef.update({ moving: true, direction });
-  } else {
-    playerRef.update({ moving: false, direction });
+  }
+  // Chỉ update Firebase nếu vị trí hoặc hướng thay đổi, và không quá 20ms/lần
+  const now = Date.now();
+  if ((x !== lastSentX || y !== lastSentY || direction !== lastSentDir || moved !== false) && now - lastUpdateTime > 20) {
+    playerRef.update({ x, y, moving: moved, direction });
+    lastSentX = x;
+    lastSentY = y;
+    lastSentDir = direction;
+    lastUpdateTime = now;
   }
   updateBullets();
   renderBullets();
@@ -685,6 +743,38 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     statsWrap.appendChild(barWrap);
     div.appendChild(statsWrap);
     container.appendChild(div);
+    
+    // Hiển thị số lớp giáp (cũ)
+    // const shieldDiv = document.createElement("div");
+    // shieldDiv.style.color = "#0ff";
+    // shieldDiv.style.fontSize = "10px";
+    // shieldDiv.style.textAlign = "center";
+    // shieldDiv.style.marginBottom = "1px";
+    // shieldDiv.style.textShadow = "0 0 2px #000";
+    // shieldDiv.textContent = data.shield ? `🛡️ x${data.shield}` : "";
+    // statsWrap.insertBefore(shieldDiv, nameDiv.nextSibling);
+
+    // Vẽ giáp dạng vòng tròn bao quanh nhân vật
+    if (data.shield && data.shield > 0) {
+      for (let i = 0; i < data.shield; i++) {
+        const shieldCircle = document.createElement("div");
+        shieldCircle.className = "shield-circle";
+        shieldCircle.style.position = "absolute";
+        shieldCircle.style.left = "-10px";
+        shieldCircle.style.top = "-10px";
+        shieldCircle.style.width = "70px";
+        shieldCircle.style.height = "70px";
+        shieldCircle.style.borderRadius = "50%";
+        shieldCircle.style.border = `2.5px solid #0ff`;
+        shieldCircle.style.boxSizing = "border-box";
+        shieldCircle.style.pointerEvents = "none";
+        shieldCircle.style.opacity = (0.18 + 0.18 * i).toFixed(2); // Lớp ngoài cùng mờ nhất
+        shieldCircle.style.zIndex = 10 + i;
+        shieldCircle.style.filter = `blur(${2 * (data.shield - i - 1)}px)`;
+        div.appendChild(shieldCircle);
+      }
+    }
+
     if (p.key === playerId) currentPlayer = data;
   });
 });
@@ -720,3 +810,67 @@ firebase.auth().onAuthStateChanged(user => {
     showPanel("login");
   }
 });
+
+// Thêm hàm xóa phòng
+window.deleteRoom = function(roomId) {
+  if (confirm('Bạn có chắc muốn xóa phòng ' + roomId + ' không?')) {
+    db.ref('rooms/' + roomId).remove().then(() => {
+      loadRoomList();
+    });
+  }
+};
+
+// Áp dụng giảm sát thương nếu có giáp khi bị bắn hoặc đánh
+function applyShieldDamage(hp, shield, dmg) {
+  if (shield && shield > 0) {
+    const reduced = Math.ceil(dmg * 0.9); // Giảm 10%
+    return { hp: Math.max(0, hp - reduced), shield };
+  }
+  return { hp: Math.max(0, hp - dmg), shield };
+}
+
+// Sửa các chỗ trừ máu khi bị bắn hoặc đánh
+// Đạn thường
+if (Math.abs(b.x - data.x) < 30 && Math.abs(b.y - data.y) < 40) {
+  let newHp = data.hp;
+  let newShield = data.shield || 0;
+  if (newShield > 0) {
+    if (5 <= 10) {
+      newShield--;
+      // Đạn thường 5 sát thương, giáp chặn hết, máu không giảm
+    }
+  } else {
+    newHp = Math.max(0, newHp - 5);
+  }
+  db.ref(`rooms/${roomId}/players/${p.key}`).update({ hp: newHp, shield: newShield });
+  hitPlayer = true;
+}
+// Đạn skill
+if (Math.abs(b.x - data.x) < 60 && Math.abs(b.y - data.y) < 60) {
+  let newHp = data.hp;
+  let newShield = data.shield || 0;
+  if (newShield > 0) {
+    if (10 <= 10) {
+      newShield--;
+      // Skill 10 sát thương, giáp chặn hết, máu không giảm
+    }
+  } else {
+    newHp = Math.max(0, newHp - 10);
+  }
+  db.ref(`rooms/${roomId}/players/${p.key}`).update({ hp: newHp, shield: newShield });
+  hitPlayer = true;
+}
+// Đánh cận chiến
+if (p.key !== playerId && Math.abs(p.val().x - x) < 50) {
+  let newHp = p.val().hp;
+  let newShield = p.val().shield || 0;
+  if (newShield > 0) {
+    if (5 <= 10) {
+      newShield--;
+      // Đánh cận chiến 5 sát thương, giáp chặn hết, máu không giảm
+    }
+  } else {
+    newHp = Math.max(0, newHp - 5);
+  }
+  db.ref(`rooms/${roomId}/players/${p.key}`).update({ hp: newHp, shield: newShield });
+}

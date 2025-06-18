@@ -316,11 +316,14 @@ function renderPlayers(snap) {
       // Kiểm tra nếu người chơi hết máu thì tự động thoát phòng
       if (data.hp <= 0 && !isDead) {
         isDead = true;
-        setTimeout(() => {
-          alert("Bạn đã chết!");
-          leaveRoom();
-          isDead = false;  // Reset trạng thái chết sau khi đã rời phòng
-        }, 500);
+        // Xóa player khỏi Firebase ngay lập tức
+        playerRef.remove().then(() => {
+          setTimeout(() => {
+            alert("Bạn đã chết!");
+            leaveRoom();
+            isDead = false;  // Reset trạng thái chết sau khi đã rời phòng
+          }, 500);
+        });
       }
     }
   });

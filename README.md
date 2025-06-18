@@ -3,7 +3,7 @@
 ## Cài đặt
 
 1. Clone repository này
-2. Vào thư mục pk_multiplayer_game
+2. Vào thư mục coddingPK
 3. Sao chép file `firebase-config.example.js` thành `firebase-config.js`
 4. Thay thế các giá trị trong `firebase-config.js` với thông tin Firebase của bạn
 

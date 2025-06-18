@@ -86,6 +86,23 @@ function setupRoomAutoCleanup(roomId) {
   });
 }
 
+// Hàm thoát phòng
+function leaveRoom() {
+  if (playerRef) {
+    playerRef.remove();
+  }
+  if (window._playersListener) window._playersListener.off();
+  if (window._bulletsListener) window._bulletsListener.off();
+  roomId = null;
+  playerId = null;
+  playerRef = null;
+  showPanel("room");
+  loadRoomList();
+}
+
+// Lắng nghe sự kiện click nút thoát
+document.getElementById("leave-room-btn").onclick = leaveRoom;
+
 window.joinRoom = function(rid) {
   roomId = rid;
   playerId = "player-" + Math.floor(Math.random() * 10000);
@@ -95,6 +112,8 @@ window.joinRoom = function(rid) {
   energy = 0;
   direction = "right";
   playerRef = db.ref(`rooms/${roomId}/players/${playerId}`);
+  // Hiển thị ID phòng
+  document.getElementById("room-id").textContent = roomId;
   playerRef.set({ x, y, hp, energy, name: userName, attacking: false, skill_ready: false, direction });
   playerRef.onDisconnect().remove();
   setupRoomAutoCleanup(roomId); // Đảm bảo luôn có listener tự động xóa phòng
@@ -184,7 +203,16 @@ function renderPlayers(snap) {
     barWrap.appendChild(mnBar);
     div.appendChild(barWrap);
     container.appendChild(div);
-    if (p.key === playerId) currentPlayer = data;
+    if (p.key === playerId) {
+      currentPlayer = data;
+      // Kiểm tra nếu người chơi hết máu thì tự động thoát phòng
+      if (data.hp <= 0) {
+        setTimeout(() => {
+          alert("Bạn đã chết!");
+          leaveRoom();
+        }, 500);
+      }
+    }
   });
 }
 
@@ -362,14 +390,17 @@ function useSkill() {
 
 function updateBullets() {
   const speed = 10;
-  bullets.forEach(b => {
+  const bulletsToRemove = [];
+
+  bullets = bullets.filter(b => {
     if (b.owner === playerId) {
       b.x += b.dir === "right" ? speed : -speed;
+      
       // Kiểm tra va chạm obstacle
-      let hitObs = false;
-      // Cải thiện kiểm tra va chạm chướng ngại vật
       const bulletWidth = b.special ? 32 : 12;
       const bulletHeight = b.special ? 32 : 12;
+      
+      // Kiểm tra va chạm với chướng ngại vật
       for (const o of obstacles) {
         if (
           b.x < o.x + o.w &&
@@ -377,43 +408,52 @@ function updateBullets() {
           b.y < o.y + o.h &&
           b.y + bulletHeight > o.y
         ) {
-          hitObs = true;
-          break;
+          bulletsToRemove.push(b._key);
+          return false;
         }
-      }
-      if (hitObs) {
-        db.ref(`rooms/${roomId}/bullets/${b._key}`).remove();
-        bullets = bullets.filter(bullet => bullet._key !== b._key);
-        return;
       }
       // Xóa đạn nếu ra khỏi màn hình
       if (b.x < 0 || b.x > (document.getElementById("game-container")?.clientWidth || 800)) {
-        db.ref(`rooms/${roomId}/bullets/${b._key}`).remove();
-        return;
+        bulletsToRemove.push(b._key);
+        return false;
       }
+      
       // Kiểm tra va chạm với đối thủ
+      let hitPlayer = false;
       db.ref(`rooms/${roomId}/players`).once("value", snap => {
         snap.forEach(p => {
           if (p.key !== playerId) {
             const data = p.val();
-            // Đạn đặc biệt va chạm rộng hơn và mạnh hơn
             if (b.special) {
               if (Math.abs(b.x - data.x) < 60 && Math.abs(b.y - data.y) < 60) {
                 db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 40));
-                db.ref(`rooms/${roomId}/bullets/${b._key}`).remove();
+                hitPlayer = true;
               }
             } else {
               if (Math.abs(b.x - data.x) < 30 && Math.abs(b.y - data.y) < 40) {
                 db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 15));
-                db.ref(`rooms/${roomId}/bullets/${b._key}`).remove();
+                hitPlayer = true;
               }
             }
           }
         });
       });
+
+      if (hitPlayer) {
+        bulletsToRemove.push(b._key);
+        return false;
+      }
+
       // Update vị trí đạn
       db.ref(`rooms/${roomId}/bullets/${b._key}`).update({ x: b.x, y: b.y });
+      return true;
     }
+    return true;
+  });
+
+  // Xóa tất cả đạn cần xóa một lần
+  bulletsToRemove.forEach(key => {
+    db.ref(`rooms/${roomId}/bullets/${key}`).remove();
   });
 }
 

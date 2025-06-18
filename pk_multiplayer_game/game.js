@@ -136,7 +136,8 @@ function leaveRoom() {
       window._bulletsListener = null;
     }
 
-    // Remove the player data from Firebase
+    // Remove the player data from Firebase and clear all handlers
+    playerRef.onDisconnect().cancel(); // Hủy handler onDisconnect
     playerRef.remove()
       .then(() => {
         // Clear all local state
@@ -145,6 +146,8 @@ function leaveRoom() {
         playerRef = null;
         bullets = [];
         obstacles = [];
+        isDead = false; // Reset trạng thái chết
+        hp = 100; // Reset máu
 
         // Switch to room panel and refresh room list
         showPanel("room");
@@ -163,28 +166,54 @@ function leaveRoom() {
 document.getElementById("leave-room-btn").onclick = leaveRoom;
 
 window.joinRoom = function(rid) {
+  // Reset các trạng thái
+  isDead = false;  // Reset trạng thái chết
   roomId = rid;
   playerId = "player-" + Math.floor(Math.random() * 10000);
   x = Math.floor(Math.random() * 700);
   y = 0;
-  hp = 100;
+  hp = 100;  // Reset máu
   energy = 0;
   direction = "right";
+  
+  // Tạo reference mới
   playerRef = db.ref(`rooms/${roomId}/players/${playerId}`);
+  
   // Hiển thị ID phòng
   document.getElementById("room-id").textContent = roomId;
-  playerRef.set({ x, y, hp, energy, name: userName, attacking: false, skill_ready: false, direction });
+  
+  // Cập nhật dữ liệu người chơi lên Firebase
+  playerRef.set({ 
+    x, y, hp, energy, 
+    name: userName, 
+    attacking: false, 
+    skill_ready: false, 
+    direction 
+  });
+  
+  // Thiết lập cleanup khi disconnect
   playerRef.onDisconnect().remove();
-  setupRoomAutoCleanup(roomId); // Đảm bảo luôn có listener tự động xóa phòng
+  setupRoomAutoCleanup(roomId);
+  
+  // Chuyển sang màn hình game
   showPanel("game");
-  // Đăng ký lại listener cho players và bullets khi vào phòng mới
+  
+  // Đăng ký lại các listener
   if (window._playersListener) window._playersListener.off();
   if (window._bulletsListener) window._bulletsListener.off();
+  
   window._playersListener = db.ref(`rooms/${roomId}/players`);
   window._bulletsListener = db.ref(`rooms/${roomId}/bullets`);
   window._playersListener.on("value", renderPlayers);
   window._bulletsListener.on("value", bulletsListener);
-  if (!window._gameStarted) { window._gameStarted = true; gameLoop(); }
+  
+  // Khởi động game loop nếu chưa chạy
+  if (!window._gameStarted) { 
+    window._gameStarted = true; 
+    gameLoop(); 
+  }
+  
+  // Thiết lập các event listener cho bàn phím
   setupKeyListeners();
   listenObstacles();
 };

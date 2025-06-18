@@ -281,6 +281,10 @@ function renderPlayers(snap) {
     statsWrap.style.width = "60px";
     statsWrap.style.height = "26px";  // Tăng chiều cao để chứa tên
     statsWrap.style.pointerEvents = "none";
+    statsWrap.style.display = "flex";
+    statsWrap.style.flexDirection = "column";
+    statsWrap.style.alignItems = "center";
+    statsWrap.style.justifyContent = "flex-end";
     
     // Tên nhân vật
     const nameDiv = document.createElement("div");
@@ -443,11 +447,10 @@ function setupKeyListeners() {
 }
 
 function createShield() {
-  if (shield < MAX_SHIELD && hp > 2 && energy >= 2) {
+  if (shield < MAX_SHIELD && energy >= 2) {
     shield++;
-    hp -= 2;
     energy -= 2;
-    playerRef.update({ shield, hp, energy });
+    playerRef.update({ shield, energy });
   }
 }
 
@@ -706,6 +709,10 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     statsWrap.style.width = "60px";
     statsWrap.style.height = "26px";  // Tăng chiều cao để chứa tên
     statsWrap.style.pointerEvents = "none";
+    statsWrap.style.display = "flex";
+    statsWrap.style.flexDirection = "column";
+    statsWrap.style.alignItems = "center";
+    statsWrap.style.justifyContent = "flex-end";
     
     // Tên nhân vật
     const nameDiv = document.createElement("div");

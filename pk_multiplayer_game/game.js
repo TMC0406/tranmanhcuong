@@ -2,7 +2,9 @@ let userName = "";
 let roomId = null;
 let playerId = null;
 let playerRef = null;
-let x = 0, y = 0, hp = 100, energy = 0, direction = "right";
+let x = 0, y = 0, hp = 200, energy = 0, direction = "right";  // Tăng máu lên 200
+const MAX_HP = 200;  // Thêm hằng số cho máu tối đa
+const MAX_ENERGY = 10;  // Thêm hằng số cho năng lượng tối đa
 let keys = {}, bullets = [];
 let isDead = false;  // Thêm biến này
 
@@ -167,12 +169,12 @@ document.getElementById("leave-room-btn").onclick = leaveRoom;
 
 window.joinRoom = function(rid) {
   // Reset các trạng thái
-  isDead = false;  // Reset trạng thái chết
+  isDead = false;
   roomId = rid;
   playerId = "player-" + Math.floor(Math.random() * 10000);
   x = Math.floor(Math.random() * 700);
   y = 0;
-  hp = 100;  // Reset máu
+  hp = MAX_HP;  // Dùng hằng số máu tối đa
   energy = 0;
   direction = "right";
   
@@ -288,7 +290,7 @@ function renderPlayers(snap) {
     // Thanh máu
     const hpBar = document.createElement("div");
     hpBar.style.height = "7px";
-    hpBar.style.width = Math.max(0, Math.min(1, data.hp/100)) * 50 + "px";
+    hpBar.style.width = Math.max(0, Math.min(1, data.hp/MAX_HP)) * 50 + "px";
     hpBar.style.background = "#f00";
     hpBar.style.border = "1px solid #fff3";
     hpBar.style.borderRadius = "4px";
@@ -297,7 +299,7 @@ function renderPlayers(snap) {
     // Thanh năng lượng
     const mnBar = document.createElement("div");
     mnBar.style.height = "5px";
-    mnBar.style.width = Math.max(0, Math.min(1, (data.energy||0)/3)) * 50 + "px";
+    mnBar.style.width = Math.max(0, Math.min(1, (data.energy||0)/MAX_ENERGY)) * 50 + "px";
     mnBar.style.background = "#09f";
     mnBar.style.border = "1px solid #fff3";
     mnBar.style.borderRadius = "4px";
@@ -446,10 +448,10 @@ function checkHit() {
   db.ref(`rooms/${roomId}/players`).once("value", snap => {
     snap.forEach(p => {
       if (p.key !== playerId && Math.abs(p.val().x - x) < 50) {
-        db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 10));
+        db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 5)); // Đòn đánh cận chiến cũng trừ 5hp
         playerRef.once("value", snap => {
           const e = (snap.val().energy || 0) + 1;
-          playerRef.update({ energy: e, skill_ready: e >= 3 });
+          playerRef.update({ energy: e, skill_ready: e >= 2 });
         });
       }
     });
@@ -465,14 +467,14 @@ function shoot() {
     dir: direction,
     owner: playerId,
     time: Date.now(),
-    type: "normal" // Phân biệt loại đạn
+    type: "normal"
   };
   db.ref(`rooms/${roomId}/bullets`).push(bullet);
-  // Tăng năng lượng khi bắn thường
+  // Tăng năng lượng khi bắn thường (1 điểm mỗi lần bắn)
   playerRef.once("value", snap => {
-    let e = (snap.val().energy || 0) + 0.6;
-    if (e > 3) e = 3;
-    playerRef.update({ energy: e, skill_ready: e >= 3 });
+    let e = (snap.val().energy || 0) + 1;
+    if (e > MAX_ENERGY) e = MAX_ENERGY;
+    playerRef.update({ energy: e, skill_ready: e >= 2 });  // Chỉ cần 2 năng lượng để dùng skill
   });
 }
 
@@ -480,7 +482,7 @@ function shoot() {
 function useSkill() {
   playerRef.once("value", snap => {
     const data = snap.val();
-    if ((data.energy || 0) >= 3) {
+    if ((data.energy || 0) >= 2) {  // Chỉ cần 2 năng lượng để dùng skill
       // Đạn đặc biệt
       const bullet = {
         x: direction === "right" ? x + 40 : x - 10,
@@ -488,10 +490,10 @@ function useSkill() {
         dir: direction,
         owner: playerId,
         time: Date.now(),
-        special: true // Đánh dấu là đạn đặc biệt
+        special: true
       };
       db.ref(`rooms/${roomId}/bullets`).push(bullet);
-      playerRef.update({ energy: 0, skill_ready: false });
+      playerRef.update({ energy: data.energy - 2, skill_ready: false });  // Trừ 2 năng lượng
     }
   });
 }
@@ -534,12 +536,12 @@ function updateBullets() {
             const data = p.val();
             if (b.special) {
               if (Math.abs(b.x - data.x) < 60 && Math.abs(b.y - data.y) < 60) {
-                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 40));
+                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 10)); // Skill trừ 10hp
                 hitPlayer = true;
               }
             } else {
               if (Math.abs(b.x - data.x) < 30 && Math.abs(b.y - data.y) < 40) {
-                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 15));
+                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 5)); // Đạn thường trừ 5hp
                 hitPlayer = true;
               }
             }
@@ -660,7 +662,7 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     // Thanh máu
     const hpBar = document.createElement("div");
     hpBar.style.height = "7px";
-    hpBar.style.width = Math.max(0, Math.min(1, data.hp/100)) * 50 + "px";
+    hpBar.style.width = Math.max(0, Math.min(1, data.hp/MAX_HP)) * 50 + "px";
     hpBar.style.background = "#f00";
     hpBar.style.border = "1px solid #fff3";
     hpBar.style.borderRadius = "4px";
@@ -669,7 +671,7 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     // Thanh năng lượng
     const mnBar = document.createElement("div");
     mnBar.style.height = "5px";
-    mnBar.style.width = Math.max(0, Math.min(1, (data.energy||0)/3)) * 50 + "px";
+    mnBar.style.width = Math.max(0, Math.min(1, (data.energy||0)/MAX_ENERGY)) * 50 + "px";
     mnBar.style.background = "#09f";
     mnBar.style.border = "1px solid #fff3";
     mnBar.style.borderRadius = "4px";

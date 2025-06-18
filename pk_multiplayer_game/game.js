@@ -367,12 +367,15 @@ function updateBullets() {
       b.x += b.dir === "right" ? speed : -speed;
       // Kiểm tra va chạm obstacle
       let hitObs = false;
+      // Cải thiện kiểm tra va chạm chướng ngại vật
+      const bulletWidth = b.special ? 32 : 12;
+      const bulletHeight = b.special ? 32 : 12;
       for (const o of obstacles) {
         if (
-          b.x + (b.special ? 32 : 12) > o.x &&
           b.x < o.x + o.w &&
-          b.y + (b.special ? 32 : 12) > o.y &&
-          b.y < o.y + o.h
+          b.x + bulletWidth > o.x &&
+          b.y < o.y + o.h &&
+          b.y + bulletHeight > o.y
         ) {
           hitObs = true;
           break;
@@ -380,6 +383,7 @@ function updateBullets() {
       }
       if (hitObs) {
         db.ref(`rooms/${roomId}/bullets/${b._key}`).remove();
+        bullets = bullets.filter(bullet => bullet._key !== b._key);
         return;
       }
       // Xóa đạn nếu ra khỏi màn hình

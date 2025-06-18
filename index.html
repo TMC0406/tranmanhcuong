@@ -46,13 +46,38 @@
       font-weight: bold;
       letter-spacing: 3px;
     }
+
+    .game-link {
+      position: fixed;
+      top: 18px;
+      right: 32px;
+      z-index: 20;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #fff;
+      background: #222b;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-decoration: none;
+      box-shadow: 0 2px 8px #0006;
+      border: 2px solid #fff3;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .game-link:hover {
+      background: #fff;
+      color: #222;
+      border-color: #fff;
+    }
   </style>
 </head>
 <body>
   <canvas id="stars"></canvas>
   <!-- 2.6 -->
   <div class="overlay">
-    <a href="./pk_multiplayer_game/index.html" target="_blank" style="display:none;">Game</a>
+    <a href="./pk_multiplayer_game/index.html" target="_blank" class="game-link">PK_MULTIPLAYER_GAME</a>
     <div class="title">Welcome to the galaxy</div>
     <div id="clock">00:00:00</div>
   </div>

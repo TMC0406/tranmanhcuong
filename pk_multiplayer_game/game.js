@@ -57,14 +57,29 @@ createRoomBtn.onclick = () => {
 // Hiển thị danh sách phòng
 function loadRoomList() {
   const listDiv = document.getElementById("room-list");
-  listDiv.innerHTML = "Đang tải...";
+  listDiv.innerHTML = `
+    <div style="margin-bottom: 10px;">
+      <button id="refresh-rooms-btn" style="margin-right: 10px;">Làm mới danh sách</button>
+    </div>
+    <div id="rooms-content">Đang tải...</div>
+  `;
+  
+  // Gắn sự kiện click cho nút refresh
+  document.getElementById("refresh-rooms-btn").onclick = loadRoomList;
+  
+  // Lấy danh sách phòng từ Firebase
+  const roomsContent = document.getElementById("rooms-content");
   db.ref("rooms").once("value", snap => {
     const rooms = [];
     snap.forEach(r => {
-      if (r.key && r.key.startsWith("room-")) rooms.push(r.key);
+      const roomData = r.val();
+      // Chỉ thêm phòng có người chơi
+      if (r.key && r.key.startsWith("room-") && roomData.players && Object.keys(roomData.players).length > 0) {
+        rooms.push(r.key);
+      }
     });
-    if (rooms.length === 0) listDiv.innerHTML = "Không có phòng nào.";
-    else listDiv.innerHTML = rooms.map(r => `<div>${r} <button onclick=\"joinRoom('${r}')\">Tham gia</button></div>`).join("");
+    if (rooms.length === 0) roomsContent.innerHTML = "Không có phòng nào.";
+    else roomsContent.innerHTML = rooms.map(r => `<div>${r} <button onclick=\"joinRoom('${r}')\">Tham gia</button></div>`).join("");
   });
 }
 
@@ -107,15 +122,40 @@ function setupRoomAutoCleanup(roomId) {
 // Hàm thoát phòng
 function leaveRoom() {
   if (playerRef) {
-    playerRef.remove();
+    // First, update room-id display to show we're leaving
+    document.getElementById("room-id").textContent = "";
+
+    // Remove all event listeners first
+    if (window._playersListener) {
+      window._playersListener.off();
+      window._playersListener = null;
+    }
+    if (window._bulletsListener) {
+      window._bulletsListener.off();
+      window._bulletsListener = null;
+    }
+
+    // Remove the player data from Firebase
+    playerRef.remove()
+      .then(() => {
+        // Clear all local state
+        roomId = null;
+        playerId = null;
+        playerRef = null;
+        bullets = [];
+        obstacles = [];
+
+        // Switch to room panel and refresh room list
+        showPanel("room");
+        loadRoomList();
+      })
+      .catch(error => {
+        console.error("Lỗi khi thoát phòng:", error);
+        // Still try to clean up UI even if Firebase fails
+        showPanel("room");
+        loadRoomList();
+      });
   }
-  if (window._playersListener) window._playersListener.off();
-  if (window._bulletsListener) window._bulletsListener.off();
-  roomId = null;
-  playerId = null;
-  playerRef = null;
-  showPanel("room");
-  loadRoomList();
 }
 
 // Lắng nghe sự kiện click nút thoát

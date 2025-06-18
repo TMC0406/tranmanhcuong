@@ -1,0 +1,9 @@
+# Firebase config
+pk_multiplayer_game/firebase-config.js
+
+# Environment variables
+.env
+
+# OS specific files
+.DS_Store
+node_modules/

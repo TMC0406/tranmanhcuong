@@ -4,6 +4,7 @@ let playerId = null;
 let playerRef = null;
 let x = 0, y = 0, hp = 100, energy = 0, direction = "right";
 let keys = {}, bullets = [];
+let isDead = false;  // Thêm biến này
 
 // Ẩn/hiện UI
 function showPanel(panel) {
@@ -190,7 +191,6 @@ window.joinRoom = function(rid) {
 
 function renderPlayers(snap) {
   const container = document.getElementById("game-container");
-  // KHÔNG xóa container.innerHTML ở đây nữa!
   // Xóa chỉ các player cũ
   const oldPlayers = container.querySelectorAll('.player, .enemy');
   oldPlayers.forEach(p => p.remove());
@@ -234,14 +234,28 @@ function renderPlayers(snap) {
     div.appendChild(armR);
     div.appendChild(legL);
     div.appendChild(legR);
-    // Thêm thanh máu và năng lượng phía trên nhân vật
+    // Thêm wrapper cho tên và thanh máu
+    const statsWrap = document.createElement("div");
+    statsWrap.style.position = "absolute";
+    statsWrap.style.left = "-5px";
+    statsWrap.style.bottom = "54px";
+    statsWrap.style.width = "60px";
+    statsWrap.style.height = "26px";  // Tăng chiều cao để chứa tên
+    statsWrap.style.pointerEvents = "none";
+    
+    // Tên nhân vật
+    const nameDiv = document.createElement("div");
+    nameDiv.style.color = "#fff";
+    nameDiv.style.fontSize = "10px";
+    nameDiv.style.textAlign = "center";
+    nameDiv.style.marginBottom = "2px";
+    nameDiv.style.textShadow = "0 0 2px #000";
+    nameDiv.textContent = data.name || "???";
+    
+    // Thanh máu và năng lượng
     const barWrap = document.createElement("div");
-    barWrap.style.position = "absolute";
-    barWrap.style.left = "-5px";
-    barWrap.style.bottom = "54px";
-    barWrap.style.width = "60px";
     barWrap.style.height = "16px";
-    barWrap.style.pointerEvents = "none";
+    
     // Thanh máu
     const hpBar = document.createElement("div");
     hpBar.style.height = "7px";
@@ -250,6 +264,7 @@ function renderPlayers(snap) {
     hpBar.style.border = "1px solid #fff3";
     hpBar.style.borderRadius = "4px";
     hpBar.style.marginBottom = "2px";
+    
     // Thanh năng lượng
     const mnBar = document.createElement("div");
     mnBar.style.height = "5px";
@@ -257,17 +272,23 @@ function renderPlayers(snap) {
     mnBar.style.background = "#09f";
     mnBar.style.border = "1px solid #fff3";
     mnBar.style.borderRadius = "4px";
+    
     barWrap.appendChild(hpBar);
     barWrap.appendChild(mnBar);
-    div.appendChild(barWrap);
+    statsWrap.appendChild(nameDiv);
+    statsWrap.appendChild(barWrap);
+    div.appendChild(statsWrap);
     container.appendChild(div);
+    
     if (p.key === playerId) {
       currentPlayer = data;
       // Kiểm tra nếu người chơi hết máu thì tự động thoát phòng
-      if (data.hp <= 0) {
+      if (data.hp <= 0 && !isDead) {
+        isDead = true;
         setTimeout(() => {
           alert("Bạn đã chết!");
           leaveRoom();
+          isDead = false;  // Reset trạng thái chết sau khi đã rời phòng
         }, 500);
       }
     }
@@ -585,14 +606,28 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     div.appendChild(armR);
     div.appendChild(legL);
     div.appendChild(legR);
-    // Thêm thanh máu và năng lượng phía trên nhân vật
+    // Thêm wrapper cho tên và thanh máu
+    const statsWrap = document.createElement("div");
+    statsWrap.style.position = "absolute";
+    statsWrap.style.left = "-5px";
+    statsWrap.style.bottom = "54px";
+    statsWrap.style.width = "60px";
+    statsWrap.style.height = "26px";  // Tăng chiều cao để chứa tên
+    statsWrap.style.pointerEvents = "none";
+    
+    // Tên nhân vật
+    const nameDiv = document.createElement("div");
+    nameDiv.style.color = "#fff";
+    nameDiv.style.fontSize = "10px";
+    nameDiv.style.textAlign = "center";
+    nameDiv.style.marginBottom = "2px";
+    nameDiv.style.textShadow = "0 0 2px #000";
+    nameDiv.textContent = data.name || "???";
+    
+    // Thanh máu và năng lượng
     const barWrap = document.createElement("div");
-    barWrap.style.position = "absolute";
-    barWrap.style.left = "-5px";
-    barWrap.style.bottom = "54px";
-    barWrap.style.width = "60px";
     barWrap.style.height = "16px";
-    barWrap.style.pointerEvents = "none";
+    
     // Thanh máu
     const hpBar = document.createElement("div");
     hpBar.style.height = "7px";
@@ -601,6 +636,7 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     hpBar.style.border = "1px solid #fff3";
     hpBar.style.borderRadius = "4px";
     hpBar.style.marginBottom = "2px";
+    
     // Thanh năng lượng
     const mnBar = document.createElement("div");
     mnBar.style.height = "5px";
@@ -608,9 +644,12 @@ db.ref(`rooms/${roomId}/players`).on("value", snap => {
     mnBar.style.background = "#09f";
     mnBar.style.border = "1px solid #fff3";
     mnBar.style.borderRadius = "4px";
+    
     barWrap.appendChild(hpBar);
     barWrap.appendChild(mnBar);
-    div.appendChild(barWrap);
+    statsWrap.appendChild(nameDiv);
+    statsWrap.appendChild(barWrap);
+    div.appendChild(statsWrap);
     container.appendChild(div);
     if (p.key === playerId) currentPlayer = data;
   });

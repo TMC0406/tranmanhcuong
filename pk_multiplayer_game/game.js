@@ -69,21 +69,39 @@ function loadRoomList() {
 }
 
 // Tham gia phòng
+// Xóa phòng cũ không còn người chơi
+function cleanupOldRooms() {
+  db.ref('rooms').once('value', snap => {
+    snap.forEach(room => {
+      const roomData = room.val();
+      if (!roomData.players || Object.keys(roomData.players).length === 0) {
+        db.ref(`rooms/${room.key}`).remove();
+      }
+    });
+  });
+}
+
 // Đăng ký listener xóa phòng khi không còn ai trong phòng
 function setupRoomAutoCleanup(roomId) {
+  const roomRef = db.ref(`rooms/${roomId}`);
   const playersRef = db.ref(`rooms/${roomId}/players`);
+  
+  // Cleanup khi không còn người chơi
   playersRef.on('value', snap => {
     if (snap.numChildren() === 0) {
       // Đợi 500ms để đảm bảo onDisconnect đã thực thi
       setTimeout(() => {
         playersRef.once('value', s2 => {
           if (s2.numChildren() === 0) {
-            db.ref(`rooms/${roomId}`).remove();
+            roomRef.remove();
           }
         });
       }, 500);
     }
   });
+
+  // Dọn dẹp phòng cũ mỗi khi vào phòng mới
+  cleanupOldRooms();
 }
 
 // Hàm thoát phòng

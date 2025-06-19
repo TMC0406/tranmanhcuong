@@ -24,8 +24,8 @@
 
     .overlay {
       position: absolute;
-      top: 50%;
       left: 50%;
+      top: 80%; /* Đẩy xuống dưới để không che mặt trời */
       transform: translate(-50%, -50%);
       z-index: 10;
       text-align: center;
@@ -335,11 +335,84 @@
       const centerX = w / 2;
       const centerY = h / 2;
 
-      // Mặt trời
+      // Mặt trời với hiệu ứng nâng cao
+      ctx.save();
+      
+      // Vẽ ánh sáng xung quanh
+      const outerGlow = ctx.createRadialGradient(
+        centerX, centerY, 20 * 5,
+        centerX, centerY, 20 * 8
+      );
+      outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
+      outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 20 * 8, 0, Math.PI * 2);
+      ctx.fillStyle = outerGlow;
+      ctx.fill();
+
+      // Vẽ mặt trời với gradient phức tạp
+      const sunGradient = ctx.createRadialGradient(
+        centerX - 20, centerY - 20, 0,
+        centerX, centerY, 20 * 5
+      );
+      sunGradient.addColorStop(0, '#ffffff');    // Trung tâm trắng
+      sunGradient.addColorStop(0.2, '#fff7e6');  // Chuyển sang vàng nhạt
+      sunGradient.addColorStop(0.5, '#ffdb4d');  // Vàng
+      sunGradient.addColorStop(0.8, '#ff9900');  // Cam
+      sunGradient.addColorStop(1, '#ff6600');    // Cam đậm ở viền
+      
       ctx.beginPath();
       ctx.arc(centerX, centerY, 20 * 5, 0, Math.PI * 2);
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = sunGradient;
       ctx.fill();
+
+      // Thêm hiệu ứng corona
+      for (let i = 0; i < 24; i++) {
+        const angle = (i * Math.PI * 2) / 24;
+        const length = Math.random() * 50 + 80;
+        const width = Math.random() * 2 + 1;
+        
+        ctx.beginPath();
+        ctx.moveTo(
+          centerX + Math.cos(angle) * (20 * 5),
+          centerY + Math.sin(angle) * (20 * 5)
+        );
+        ctx.lineTo(
+          centerX + Math.cos(angle) * (20 * 5 + length),
+          centerY + Math.sin(angle) * (20 * 5 + length)
+        );
+        const gradient = ctx.createLinearGradient(
+          centerX + Math.cos(angle) * (20 * 5),
+          centerY + Math.sin(angle) * (20 * 5),
+          centerX + Math.cos(angle) * (20 * 5 + length),
+          centerY + Math.sin(angle) * (20 * 5 + length)
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 190, 0.5)');
+        gradient.addColorStop(1, 'rgba(255, 255, 190, 0)');
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = width;
+        ctx.stroke();
+      }
+      
+      // Thêm điểm sáng ngẫu nhiên
+      for (let i = 0; i < 8; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * (20 * 4);
+        const size = Math.random() * 10 + 5;
+        
+        ctx.beginPath();
+        ctx.arc(
+          centerX + Math.cos(angle) * distance,
+          centerY + Math.sin(angle) * distance,
+          size,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+      }
+      
+      ctx.restore();
 
       // Vẽ và cập nhật hành tinh
       for (let p of planets) {

@@ -281,40 +281,53 @@
   ];
 
 
+    let targetWidth, targetHeight;
+    let currentScale = getScale();
+    let targetScale = currentScale;
+    
     function init() {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-      stars = [];
-      shootingStars = [];
-      galaxyStars = [];
-      planets = [];
-
-      // Tạo dải ngân hà
-      for (let i = 0; i < 1000; i++) {
-        galaxyStars.push(createGalaxyStar());
+      targetWidth = window.innerWidth;
+      targetHeight = window.innerHeight;
+      // Smooth transition for canvas size
+      if (!w || !h) {
+        w = canvas.width = targetWidth;
+        h = canvas.height = targetHeight;
       }
+      targetScale = getScale();
+      
+      if (stars.length === 0) {
+        stars = [];
+        shootingStars = [];
+        galaxyStars = [];
+        planets = [];
 
-      // Tạo một số sao băng ban đầu
-      for (let i = 0; i < 3; i++) {
-        shootingStars.push(createShootingStar());
-      }
+        // Tạo dải ngân hà
+        for (let i = 0; i < 1000; i++) {
+          galaxyStars.push(createGalaxyStar());
+        }
 
-      for (let i = 0; i < 300; i++) {
-        stars.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          r: Math.random() * 1.5 + 0.5,
-          dx: (Math.random() - 0.5) * 0.5,
-          dy: (Math.random() - 0.5) * 0.5
-        });
-      }
+        // Tạo một số sao băng ban đầu
+        for (let i = 0; i < 3; i++) {
+          shootingStars.push(createShootingStar());
+        }
 
-      for (let planet of planetData) {
-        planets.push({
-          ...planet,
-          angle: Math.random() * Math.PI * 2,
-          rotation: Math.random() * Math.PI * 2
-        });
+        for (let i = 0; i < 300; i++) {
+          stars.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: Math.random() * 1.5 + 0.5,
+            dx: (Math.random() - 0.5) * 0.5,
+            dy: (Math.random() - 0.5) * 0.5
+          });
+        }
+
+        for (let planet of planetData) {
+          planets.push({
+            ...planet,
+            angle: Math.random() * Math.PI * 2,
+            rotation: Math.random() * Math.PI * 2
+          });
+        }
       }
     }
     function getScale() {
@@ -324,7 +337,16 @@
     }
 
     function draw() {
-      const scale = getScale();
+      // Smooth transitions for window resizing
+      w += (targetWidth - w) * 0.1;
+      h += (targetHeight - h) * 0.1;
+      canvas.width = Math.round(w);
+      canvas.height = Math.round(h);
+      
+      // Smooth scale transition
+      currentScale += (targetScale - currentScale) * 0.1;
+      const scale = currentScale;
+      
       ctx.clearRect(0, 0, w, h);
 
       // Vẽ dải ngân hà
@@ -385,28 +407,20 @@
       const time = Date.now() * 0.001;  // Thời gian cho hiệu ứng động
       const sunRotation = time * 0.1;   // Góc quay của mặt trời
       
+      // Vẽ các lớp hào quang
       for (let i = 0; i < 3; i++) {
+        const glowRadius = (20 * 8 + Math.sin(time + i) * 10) * scale;
         const outerGlow = ctx.createRadialGradient(
           centerX, centerY, 20 * 5 * scale,
-          centerX, centerY, (20 * 8 + Math.sin(time + i) * 10) * scale
+          centerX, centerY, glowRadius
         );
-        outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
+        outerGlow.addColorStop(0, `rgba(255, 255, 190, ${0.3 - i * 0.1})`);
         outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
         ctx.beginPath();
-        ctx.arc(centerX, centerY, (20 * 8 + Math.sin(time + i) * 10) * scale, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
         ctx.fillStyle = outerGlow;
         ctx.fill();
       }
-
-      // Vẽ mặt trời với gradient phức tạp và hiệu ứng quay
-      ctx.translate(centerX, centerY);
-      ctx.rotate(sunRotation);
-      outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
-      outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 20 * 8 * scale, 0, Math.PI * 2);
-      ctx.fillStyle = outerGlow;
-      ctx.fill();
 
       // Vẽ mặt trời với gradient phức tạp và hiệu ứng quay
       ctx.save();
@@ -434,22 +448,22 @@
       for (let i = 0; i < 24; i++) {
         const angle = (i * Math.PI * 2) / 24;
         const length = (Math.random() * 50 + 80) * scale;
-        const width = Math.random() * 2 + 1 * scale;
+        const width = (Math.random() * 2 + 1) * scale;
         
         ctx.beginPath();
         ctx.moveTo(
-          centerX + Math.cos(angle) * (20 * 5 * scale),
-          centerY + Math.sin(angle) * (20 * 5 * scale)
+          Math.cos(angle) * (20 * 5 * scale),
+          Math.sin(angle) * (20 * 5 * scale)
         );
         ctx.lineTo(
-          centerX + Math.cos(angle) * (20 * 5 * scale + length),
-          centerY + Math.sin(angle) * (20 * 5 * scale + length)
+          Math.cos(angle) * (20 * 5 * scale + length),
+          Math.sin(angle) * (20 * 5 * scale + length)
         );
         const gradient = ctx.createLinearGradient(
-          centerX + Math.cos(angle) * (20 * 5),
-          centerY + Math.sin(angle) * (20 * 5),
-          centerX + Math.cos(angle) * (20 * 5 + length),
-          centerY + Math.sin(angle) * (20 * 5 + length)
+          Math.cos(angle) * (20 * 5 * scale),
+          Math.sin(angle) * (20 * 5 * scale),
+          Math.cos(angle) * (20 * 5 * scale + length),
+          Math.sin(angle) * (20 * 5 * scale + length)
         );
         gradient.addColorStop(0, 'rgba(255, 255, 190, 0.5)');
         gradient.addColorStop(1, 'rgba(255, 255, 190, 0)');
@@ -478,14 +492,18 @@
       
       ctx.restore();
 
-      // Vẽ và cập nhật hành tinh
+      // Vẽ và cập nhật hành tinh với chuyển động mượt mà
       for (let p of planets) {
-        const x = centerX + Math.cos(p.angle) * p.radius * scale;
-        const y = centerY + Math.sin(p.angle) * p.radius * scale;
+        // Tạo chuyển động elip cho quỹ đạo
+        const eccentricity = 0.1; // Độ lệch tâm nhỏ để tạo quỹ đạo elip
+        const radiusX = p.radius * scale;
+        const radiusY = p.radius * scale * (1 - eccentricity);
+        const x = centerX + Math.cos(p.angle) * radiusX;
+        const y = centerY + Math.sin(p.angle) * radiusY;
 
-        // Orbit path
+        // Vẽ quỹ đạo elip
         ctx.beginPath();
-        ctx.arc(centerX, centerY, p.radius * scale, 0, Math.PI * 2);
+        ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(255,255,255,0.05)";
         ctx.stroke();
 
@@ -526,8 +544,13 @@
           });
         }
         
-        // Update planet rotation
-        p.rotation += p.rotationSpeed || 0.01;
+        // Update planet rotation with smooth acceleration
+        if (!p.currentRotationSpeed) {
+            p.currentRotationSpeed = p.rotationSpeed || 0.01;
+        }
+        // Smooth rotation speed transition
+        p.currentRotationSpeed += ((p.rotationSpeed || 0.01) - p.currentRotationSpeed) * 0.1;
+        p.rotation += p.currentRotationSpeed;
         
         // Add shadow
         ctx.shadowColor = 'rgba(0,0,0,0.3)';
@@ -565,15 +588,28 @@
           ctx.fill();
         }
         
-        // Vẽ mặt trăng nếu hành tinh là Trái Đất
+        // Vẽ mặt trăng nếu hành tinh là Trái Đất với quỹ đạo elip
         if (p.moon) {
           const moonAngle = p.moon.angle;
-          const moonX = x + Math.cos(moonAngle) * (p.moon.distance * scale);
-          const moonY = y + Math.sin(moonAngle) * (p.moon.distance * scale);
+          const moonEccentricity = 0.05; // Độ lệch tâm quỹ đạo mặt trăng
+          const moonRadiusX = p.moon.distance * scale;
+          const moonRadiusY = p.moon.distance * scale * (1 - moonEccentricity);
+          const moonTilt = Math.PI / 15; // Góc nghiêng quỹ đạo ~ 12 độ
           
-          // Vẽ quỹ đạo mặt trăng
+          // Tọa độ mặt trăng có tính đến độ nghiêng và elip
+          const moonX = x + (Math.cos(moonAngle) * moonRadiusX * Math.cos(moonTilt) - 
+                           Math.sin(moonAngle) * moonRadiusY * Math.sin(moonTilt));
+          const moonY = y + (Math.cos(moonAngle) * moonRadiusX * Math.sin(moonTilt) + 
+                           Math.sin(moonAngle) * moonRadiusY * Math.cos(moonTilt));
+          
+          // Vẽ quỹ đạo mặt trăng elip và nghiêng
           ctx.beginPath();
-          ctx.arc(x, y, p.moon.distance * scale, 0, Math.PI * 2);
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(moonTilt);
+          ctx.scale(1, 1 - moonEccentricity);
+          ctx.arc(0, 0, p.moon.distance * scale, 0, Math.PI * 2);
+          ctx.restore();
           ctx.strokeStyle = "rgba(255,255,255,0.1)";
           ctx.stroke();
           

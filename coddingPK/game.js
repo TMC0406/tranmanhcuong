@@ -512,7 +512,19 @@ function checkHit() {
   db.ref(`rooms/${roomId}/players`).once("value", snap => {
     snap.forEach(p => {
       if (p.key !== playerId && Math.abs(p.val().x - x) < 50) {
-        db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 5)); // Đòn đánh cận chiến cũng trừ 5hp
+        // Shield logic for melee: mỗi lớp giáp chặn 10 damage, mất 1 lớp mỗi lần trúng, còn lại trừ vào máu
+        let data = p.val();
+        let dmg = 5;
+        let shield = data.shield || 0;
+        if (shield > 0) {
+          dmg -= 10;
+          shield -= 1;
+          if (dmg < 0) dmg = 0;
+          db.ref(`rooms/${roomId}/players/${p.key}`).update({ shield });
+        }
+        if (dmg > 0) {
+          db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, (hp || 0) - dmg));
+        }
         playerRef.once("value", snap => {
           const e = (snap.val().energy || 0) + 1;
           playerRef.update({ energy: e, skill_ready: e >= 2 });

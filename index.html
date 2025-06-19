@@ -71,12 +71,36 @@
       color: #222;
       border-color: #fff;
     }
+    @media (max-width: 600px) {
+      .overlay {
+        top: 88%;
+        padding: 0.8rem 0.5rem;
+        border-radius: 8px;
+        min-width: 120px;
+        max-width: 98vw;
+      }
+      .title {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+      #clock {
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+      }
+      .game-link {
+        font-size: 0.9rem;
+        padding: 7px 10px;
+        top: 8px;
+        right: 8px;
+        border-radius: 6px;
+      }
+    }
   </style>
 </head>
 <body>
   <a href="./coddingPK/index.html" target="_blank"  class="game-link">coddingPK</a>
   <canvas id="stars"></canvas>
-  <!-- 2.6 -->
+  <!-- 2.0 -->
   <div class="overlay">
     <div class="title">Welcome to the galaxy</div>
     <div id="clock">00:00:00</div>
@@ -283,8 +307,14 @@
         });
       }
     }
+    function getScale() {
+      if (window.innerWidth < 600) return 0.35;
+      if (window.innerWidth < 900) return 0.6;
+      return 1;
+    }
 
     function draw() {
+      const scale = getScale();
       ctx.clearRect(0, 0, w, h);
 
       // Vẽ dải ngân hà
@@ -340,20 +370,20 @@
       
       // Vẽ ánh sáng xung quanh
       const outerGlow = ctx.createRadialGradient(
-        centerX, centerY, 20 * 5,
-        centerX, centerY, 20 * 8
+        centerX, centerY, 20 * 5 * scale,
+        centerX, centerY, 20 * 8 * scale
       );
       outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
       outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 20 * 8, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, 20 * 8 * scale, 0, Math.PI * 2);
       ctx.fillStyle = outerGlow;
       ctx.fill();
 
       // Vẽ mặt trời với gradient phức tạp
       const sunGradient = ctx.createRadialGradient(
-        centerX - 20, centerY - 20, 0,
-        centerX, centerY, 20 * 5
+        centerX - 20 * scale, centerY - 20 * scale, 0,
+        centerX, centerY, 20 * 5 * scale
       );
       sunGradient.addColorStop(0, '#ffffff');    // Trung tâm trắng
       sunGradient.addColorStop(0.2, '#fff7e6');  // Chuyển sang vàng nhạt
@@ -362,24 +392,24 @@
       sunGradient.addColorStop(1, '#ff6600');    // Cam đậm ở viền
       
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 20 * 5, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, 20 * 5 * scale, 0, Math.PI * 2);
       ctx.fillStyle = sunGradient;
       ctx.fill();
 
       // Thêm hiệu ứng corona
       for (let i = 0; i < 24; i++) {
         const angle = (i * Math.PI * 2) / 24;
-        const length = Math.random() * 50 + 80;
-        const width = Math.random() * 2 + 1;
+        const length = (Math.random() * 50 + 80) * scale;
+        const width = Math.random() * 2 + 1 * scale;
         
         ctx.beginPath();
         ctx.moveTo(
-          centerX + Math.cos(angle) * (20 * 5),
-          centerY + Math.sin(angle) * (20 * 5)
+          centerX + Math.cos(angle) * (20 * 5 * scale),
+          centerY + Math.sin(angle) * (20 * 5 * scale)
         );
         ctx.lineTo(
-          centerX + Math.cos(angle) * (20 * 5 + length),
-          centerY + Math.sin(angle) * (20 * 5 + length)
+          centerX + Math.cos(angle) * (20 * 5 * scale + length),
+          centerY + Math.sin(angle) * (20 * 5 * scale + length)
         );
         const gradient = ctx.createLinearGradient(
           centerX + Math.cos(angle) * (20 * 5),
@@ -397,8 +427,8 @@
       // Thêm điểm sáng ngẫu nhiên
       for (let i = 0; i < 8; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const distance = Math.random() * (20 * 4);
-        const size = Math.random() * 10 + 5;
+        const distance = Math.random() * (20 * 4 * scale);
+        const size = (Math.random() * 10 + 5) * scale;
         
         ctx.beginPath();
         ctx.arc(
@@ -416,24 +446,24 @@
 
       // Vẽ và cập nhật hành tinh
       for (let p of planets) {
-        const x = centerX + Math.cos(p.angle) * p.radius;
-        const y = centerY + Math.sin(p.angle) * p.radius;
+        const x = centerX + Math.cos(p.angle) * p.radius * scale;
+        const y = centerY + Math.sin(p.angle) * p.radius * scale;
 
         // Orbit path
         ctx.beginPath();
-        ctx.arc(centerX, centerY, p.radius, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, p.radius * scale, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(255,255,255,0.05)";
         ctx.stroke();
 
         // Planet
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.arc(x, y, p.size * scale, 0, Math.PI * 2);
         
         // Create gradient
         const gradient = ctx.createRadialGradient(
-          x - p.size/3, y - p.size/3, 0,
-          x, y, p.size
+          x - (p.size * scale)/3, y - (p.size * scale)/3, 0,
+          x, y, p.size * scale
         );
         gradient.addColorStop(0, p.gradient[2]); // Highlight
         gradient.addColorStop(0.5, p.gradient[1]); // Main color
@@ -450,9 +480,9 @@
             ctx.rotate(p.rotation);
             ctx.beginPath();
             ctx.arc(
-              detail.x * p.size,
-              detail.y * p.size,
-              detail.r * p.size,
+              detail.x * p.size * scale,
+              detail.y * p.size * scale,
+              detail.r * p.size * scale,
               0,
               Math.PI * 2
             );
@@ -472,9 +502,9 @@
         // Add rings for Saturn and Uranus
         if (p.hasRings) {
           ctx.beginPath();
-          ctx.ellipse(x, y, p.size * 1.8, p.size * 0.3, p.angle, 0, Math.PI * 2);
+          ctx.ellipse(x, y, p.size * 1.8 * scale, p.size * 0.3 * scale, p.angle, 0, Math.PI * 2);
           ctx.strokeStyle = p.ringColor || "#ffd700";
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2 * scale;
           ctx.stroke();
         }
         
@@ -482,7 +512,7 @@
         if (p.hasStripes) {
           for (let i = -3; i <= 3; i++) {
             ctx.beginPath();
-            ctx.ellipse(x, y + i * p.size/5, p.size, p.size/10, 0, 0, Math.PI * 2);
+            ctx.ellipse(x, y + i * p.size * scale/5, p.size * scale, p.size/10 * scale, 0, 0, Math.PI * 2);
             ctx.strokeStyle = i % 2 ? '#c19a6b' : '#e6c999';
             ctx.stroke();
           }
@@ -493,9 +523,9 @@
           ctx.beginPath();
           for (let i = 0; i < 5; i++) {
             const angle = (p.angle * 2) + (i * Math.PI/2.5);
-            const cloudX = x + Math.cos(angle) * (p.size * 0.8);
-            const cloudY = y + Math.sin(angle) * (p.size * 0.8);
-            ctx.arc(cloudX, cloudY, p.size/6, 0, Math.PI * 2);
+            const cloudX = x + Math.cos(angle) * (p.size * 0.8 * scale);
+            const cloudY = y + Math.sin(angle) * (p.size * 0.8 * scale);
+            ctx.arc(cloudX, cloudY, p.size/6 * scale, 0, Math.PI * 2);
           }
           ctx.fillStyle = 'rgba(255,255,255,0.3)';
           ctx.fill();

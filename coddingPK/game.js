@@ -591,28 +591,37 @@ function updateBullets() {
         bulletsToRemove.push(b._key);
         return false;
       }
-      
       // Kiểm tra va chạm với đối thủ
       let hitPlayer = false;
       db.ref(`rooms/${roomId}/players`).once("value", snap => {
         snap.forEach(p => {
           if (p.key !== playerId) {
             const data = p.val();
+            let hit = false;
             if (b.special) {
-              if (Math.abs(b.x - data.x) < 60 && Math.abs(b.y - data.y) < 60) {
-                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 10)); // Skill trừ 10hp
-                hitPlayer = true;
-              }
+              if (Math.abs(b.x - data.x) < 60 && Math.abs(b.y - data.y) < 60) hit = true;
             } else {
-              if (Math.abs(b.x - data.x) < 30 && Math.abs(b.y - data.y) < 40) {
-                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, hp - 5)); // Đạn thường trừ 5hp
-                hitPlayer = true;
+              if (Math.abs(b.x - data.x) < 30 && Math.abs(b.y - data.y) < 40) hit = true;
+            }
+            if (hit) {
+              // Shield logic: mỗi lớp giáp chặn 10 damage, mất 1 lớp mỗi lần trúng, còn lại trừ vào máu
+              let dmg = b.special ? 10 : 5;
+              let shield = data.shield || 0;
+              let hp = data.hp || 0;
+              if (shield > 0) {
+                dmg -= 10;
+                shield -= 1;
+                if (dmg < 0) dmg = 0;
+                db.ref(`rooms/${roomId}/players/${p.key}`).update({ shield });
               }
+              if (dmg > 0) {
+                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, (hp || 0) - dmg));
+              }
+              hitPlayer = true;
             }
           }
         });
       });
-
       if (hitPlayer) {
         bulletsToRemove.push(b._key);
         return false;
@@ -624,8 +633,6 @@ function updateBullets() {
     }
     return true;
   });
-
-  // Xóa tất cả đạn cần xóa một lần
   bulletsToRemove.forEach(key => {
     db.ref(`rooms/${roomId}/bullets/${key}`).remove();
   });
@@ -834,50 +841,4 @@ function applyShieldDamage(hp, shield, dmg) {
     return { hp: Math.max(0, hp - reduced), shield };
   }
   return { hp: Math.max(0, hp - dmg), shield };
-}
-
-// Sửa các chỗ trừ máu khi bị bắn hoặc đánh
-// Đạn thường
-if (Math.abs(b.x - data.x) < 30 && Math.abs(b.y - data.y) < 40) {
-  let newHp = data.hp;
-  let newShield = data.shield || 0;
-  if (newShield > 0) {
-    if (5 <= 10) {
-      newShield--;
-      // Đạn thường 5 sát thương, giáp chặn hết, máu không giảm
-    }
-  } else {
-    newHp = Math.max(0, newHp - 5);
-  }
-  db.ref(`rooms/${roomId}/players/${p.key}`).update({ hp: newHp, shield: newShield });
-  hitPlayer = true;
-}
-// Đạn skill
-if (Math.abs(b.x - data.x) < 60 && Math.abs(b.y - data.y) < 60) {
-  let newHp = data.hp;
-  let newShield = data.shield || 0;
-  if (newShield > 0) {
-    if (10 <= 10) {
-      newShield--;
-      // Skill 10 sát thương, giáp chặn hết, máu không giảm
-    }
-  } else {
-    newHp = Math.max(0, newHp - 10);
-  }
-  db.ref(`rooms/${roomId}/players/${p.key}`).update({ hp: newHp, shield: newShield });
-  hitPlayer = true;
-}
-// Đánh cận chiến
-if (p.key !== playerId && Math.abs(p.val().x - x) < 50) {
-  let newHp = p.val().hp;
-  let newShield = p.val().shield || 0;
-  if (newShield > 0) {
-    if (5 <= 10) {
-      newShield--;
-      // Đánh cận chiến 5 sát thương, giáp chặn hết, máu không giảm
-    }
-  } else {
-    newHp = Math.max(0, newHp - 5);
-  }
-  db.ref(`rooms/${roomId}/players/${p.key}`).update({ hp: newHp, shield: newShield });
 }

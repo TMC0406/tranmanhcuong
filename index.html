@@ -390,6 +390,17 @@
           centerX, centerY, 20 * 5 * scale,
           centerX, centerY, (20 * 8 + Math.sin(time + i) * 10) * scale
         );
+        outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
+        outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (20 * 8 + Math.sin(time + i) * 10) * scale, 0, Math.PI * 2);
+        ctx.fillStyle = outerGlow;
+        ctx.fill();
+      }
+
+      // Vẽ mặt trời với gradient phức tạp và hiệu ứng quay
+      ctx.translate(centerX, centerY);
+      ctx.rotate(sunRotation);
       outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
       outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
       ctx.beginPath();
@@ -415,7 +426,7 @@
       sunGradient.addColorStop(1, `hsl(${20 + hue}, 100%, 45%)`);    // Cam đậm động
       
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 20 * 5 * scale, 0, Math.PI * 2);
+      ctx.arc(0, 0, 20 * 5 * scale, 0, Math.PI * 2);
       ctx.fillStyle = sunGradient;
       ctx.fill();
 

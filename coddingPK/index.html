@@ -13,10 +13,67 @@
   <div id="login-panel">
     <h2>Đăng nhập</h2>
     <input id="username-input" placeholder="Nhập tên của bạn" maxlength="16" />
+    
+    <div class="character-select">
+      <h3>Chọn nhân vật</h3>
+      <div class="character-grid">
+        <div class="character-option selected" data-char="warrior">
+          <div class="char-preview warrior"></div>
+          <h4>Warrior</h4>
+          <p>HP: 150, Giáp +20%</p>
+        </div>
+        <div class="character-option" data-char="scout">
+          <div class="char-preview scout"></div>
+          <h4>Scout</h4>
+          <p>Tốc độ +20%, HP: 100</p>
+        </div>
+        <div class="character-option" data-char="mage">
+          <div class="char-preview mage"></div>
+          <h4>Mage</h4>
+          <p>Năng lượng +30%, HP: 80</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="weapon-select">
+      <h3>Vũ khí chính</h3>
+      <div class="weapon-grid">
+        <div class="weapon-option selected" data-weapon="pistol">
+          <div class="weapon-preview pistol"></div>
+          <h4>Pistol</h4>
+          <p>Cân bằng</p>
+        </div>
+        <div class="weapon-option" data-weapon="shotgun">
+          <div class="weapon-preview shotgun"></div>
+          <h4>Shotgun</h4>
+          <p>Sát thương gần</p>
+        </div>
+        <div class="weapon-option" data-weapon="rifle">
+          <div class="weapon-preview rifle"></div>
+          <h4>Rifle</h4>
+          <p>Tấn công xa</p>
+        </div>
+      </div>
+    </div>
+
     <button id="login-btn">Vào game</button>
   </div>
   <div id="room-panel" style="display:none">
     <h2>Chọn phòng</h2>
+    <div class="map-select">
+      <div class="map-option" data-map="classic">
+        <h3>Classic Arena</h3>
+        <p>Bản đồ cơ bản với 3 chướng ngại vật</p>
+      </div>
+      <div class="map-option" data-map="desert">
+        <h3>Desert Storm</h3>
+        <p>Sa mạc với địa hình rộng</p>
+      </div>
+      <div class="map-option" data-map="ice">
+        <h3>Ice Field</h3>
+        <p>Băng giá với nhiều chướng ngại vật</p>
+      </div>
+    </div>
     <button id="create-room-btn">Tạo phòng mới</button>
     <div id="room-list"></div>
   </div>
@@ -34,10 +91,24 @@
       Di chuyển: <b>W-A-S-D</b> hoặc <b>Phím mũi tên</b><br>
       Bắn thường: <b>J</b> hoặc <b>0</b> &nbsp;|&nbsp; Kỹ năng: <b>K</b> hoặc <b>1</b><br>
       Tạo giáp: <b>L</b> hoặc <b>2</b> (mỗi lớp giáp tốn 2 năng lượng, tối đa 5 lớp)<br>
-      Đòn cận chiến: bắn sát đối thủ<br>
-      Đạn thường gây 5 sát thương, kỹ năng gây 10 sát thương, cận chiến gây 5 sát thương<br>
-      Mỗi lớp giáp chặn được 10 sát thương rồi biến mất<br>
-      Thoát phòng: <b>Thoát phòng</b> hoặc đóng tab<br>
+      
+      <div id="character-tips" style="margin-top:10px;color:#aaf;">
+        <b>Đặc điểm nhân vật:</b><br>
+        <span class="warrior-tips">Warrior: HP cao, giáp mạnh hơn 20%</span><br>
+        <span class="scout-tips">Scout: Tốc độ nhanh hơn 20%, giảm thời gian hồi chiêu</span><br>
+        <span class="mage-tips">Mage: Tiêu hao năng lượng ít hơn 30%, HP thấp</span>
+      </div>
+
+      <div id="weapon-tips" style="margin-top:10px;color:#faa;">
+        <b>Vũ khí:</b><br>
+        <span class="pistol-tips">Pistol: Cân bằng, tốc độ bắn nhanh</span><br>
+        <span class="shotgun-tips">Shotgun: Sát thương cao tầm gần, 3 viên đạn</span><br>
+        <span class="rifle-tips">Rifle: Tầm xa, xuyên giáp 20%</span>
+      </div>
+
+      <div style="margin-top:10px;">
+        Thoát phòng: <b>Thoát phòng</b> hoặc đóng tab
+      </div>
     </div>
   </div>
   <script src="firebase-config.js"></script>

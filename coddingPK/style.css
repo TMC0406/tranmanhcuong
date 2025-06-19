@@ -187,12 +187,45 @@ body {
 }
 .bullet {
   position: absolute;
-  width: 12px;
-  height: 6px;
-  background: linear-gradient(90deg, #ff0 60%, #fa0 100%);
-  border-radius: 3px;
-  box-shadow: 0 0 6px 2px #ff0a;
   z-index: 10;
+  pointer-events: none;
+  transition: transform 0.1s;
+}
+
+.item {
+  position: absolute;
+  z-index: 9;
+  pointer-events: none;
+  transition: all 0.3s;
+}
+
+@keyframes float {
+  from { transform: translateY(0); }
+  to { transform: translateY(10px); }
+}
+
+@keyframes pulse {
+  from { transform: scale(0.8); }
+  to { transform: scale(1.2); }
+}
+
+.explosion {
+  position: absolute;
+  z-index: 11;
+  pointer-events: none;
+  border-radius: 50%;
+  animation: explode 0.3s ease-out forwards;
+}
+
+@keyframes explode {
+  from { 
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 .shield-circle {
   pointer-events: none;

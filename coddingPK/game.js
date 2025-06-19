@@ -1,3 +1,64 @@
+// Game constants
+const WEAPONS = [
+  { id: 0, name: "Pistol", damage: 20, speed: 8, energy: 1, cooldown: 300 },
+  { id: 1, name: "Shotgun", damage: 15, speed: 7, energy: 2, cooldown: 800 },
+  { id: 2, name: "Rifle", damage: 25, speed: 10, energy: 2, cooldown: 400 },
+  { id: 3, name: "Sniper", damage: 40, speed: 12, energy: 3, cooldown: 1200 },
+  { id: 4, name: "Plasma", damage: 30, speed: 6, energy: 3, cooldown: 500 },
+  { id: 5, name: "Rocket", damage: 50, speed: 5, energy: 4, cooldown: 1500 }
+];
+
+const SKILLS = [
+  { id: 0, name: "Heal", energy: 3, duration: 0, cooldown: 5000,
+    use: (player) => {
+      player.hp = Math.min(MAX_HP, player.hp + 50);
+      playerRef.update({ hp: player.hp });
+    }
+  },
+  { id: 1, name: "Shield", energy: 2, duration: 5000, cooldown: 8000,
+    use: (player) => {
+      player.shield = Math.min(MAX_SHIELD, player.shield + 1);
+      playerRef.update({ shield: player.shield });
+    }
+  },
+  { id: 2, name: "Dash", energy: 2, duration: 500, cooldown: 3000,
+    use: (player) => {
+      const speed = 20;
+      x += player.direction === "right" ? speed : -speed;
+      playerRef.update({ x });
+    }
+  },
+  { id: 3, name: "Energy Surge", energy: 0, duration: 3000, cooldown: 15000,
+    use: (player) => {
+      player.energy = MAX_ENERGY;
+      playerRef.update({ energy: MAX_ENERGY });
+    }
+  },
+  { id: 4, name: "Double Damage", energy: 4, duration: 4000, cooldown: 12000,
+    use: (player) => {
+      window._doubleDamage = true;
+      setTimeout(() => window._doubleDamage = false, 4000);
+    }
+  },
+  { id: 5, name: "Invisibility", energy: 5, duration: 3000, cooldown: 20000,
+    use: (player) => {
+      player.invisible = true;
+      playerRef.update({ invisible: true });
+      setTimeout(() => {
+        player.invisible = false;
+        playerRef.update({ invisible: false });
+      }, 3000);
+    }
+  }
+];
+
+const ITEMS = [
+  { id: 0, name: "Health", effect: "heal", amount: 50 },
+  { id: 1, name: "Energy", effect: "energy", amount: 5 },
+  { id: 2, name: "Speed", effect: "speed", duration: 5000 },
+  { id: 3, name: "Shield", effect: "shield", amount: 1 }
+];
+
 let userName = "";
 let roomId = null;
 let playerId = null;
@@ -18,24 +79,55 @@ function showPanel(panel) {
 }
 showPanel("login");
 
-// Đăng nhập
+// Đăng nhập và chọn nhân vật
 const loginBtn = document.getElementById("login-btn");
 loginBtn.onclick = () => {
   const name = document.getElementById("username-input").value.trim();
   if (!name) return alert("Vui lòng nhập tên!");
+  
+  // Validate character and weapon selection
+  selectedCharacter = document.querySelector('.character-option.selected')?.dataset.char || 'warrior';
+  selectedWeapon = document.querySelector('.weapon-option.selected')?.dataset.weapon || 'pistol';
+  
+  if (!selectedCharacter || !selectedWeapon) {
+    return alert("Vui lòng chọn nhân vật và vũ khí!");
+  }
+  
   userName = name;
   showPanel("room");
   loadRoomList();
 };
 
-// Tạo phòng mới với obstacle random
+// Map definitions
+const MAPS = [
+  {
+    id: 'classic',
+    name: 'Classic Arena',
+    background: '#222',
+    obstacles: [
+      { x: 100, y: 100, w: 60, h: 60 },
+      { x: 640, y: 100, w: 60, h: 60 },
+      { x: 370, y: 270, w: 60, h: 60 }
+    ]
+  },
+  {
+    id: 'desert',
+    name: 'Desert Storm',
+    background: '#a95',
+    obstacles: [
+      { x: 200, y: 150, w: 80, h: 40 },
+      { x: 520, y: 150, w: 80, h: 40 },
+      { x: 360, y: 300, w: 80, h: 40 }
+    ]
+  }
+];
+
+// Tạo phòng mới với map được chọn
 const createRoomBtn = document.getElementById("create-room-btn");
 createRoomBtn.onclick = () => {
   const newRoomId = "room-" + Math.floor(Math.random() * 100000);
-  // Sinh 2-4 obstacle random, đảm bảo không sát nhau (cách nhau ít nhất 30px)
-  const obstacles = [];
-  const numObs = 2 + Math.floor(Math.random() * 3);
-  let tries = 0;
+  const selectedMap = MAPS[Math.floor(Math.random() * MAPS.length)];
+  const obstacles = JSON.parse(JSON.stringify(selectedMap.obstacles));
   while (obstacles.length < numObs && tries < 1000) {
     tries++;
     const w = 40 + Math.floor(Math.random() * 60);
@@ -181,9 +273,16 @@ window.joinRoom = function(rid) {
   playerId = "player-" + Math.floor(Math.random() * 10000);
   x = Math.floor(Math.random() * 700);
   y = 0;
-  hp = MAX_HP;  // Dùng hằng số máu tối đa
+  
+  // Áp dụng chỉ số theo nhân vật
+  const charStats = CHARACTERS[selectedCharacter];
+  hp = charStats.baseHp;
+  maxHp = charStats.baseHp;
   energy = 0;
+  baseSpeed = charStats.baseSpeed;
   direction = "right";
+  currentWeapon = WEAPONS.findIndex(w => w.name.toLowerCase() === selectedWeapon);
+  currentSkill = 0;
   
   // Tạo reference mới
   playerRef = db.ref(`rooms/${roomId}/players/${playerId}`);
@@ -193,12 +292,20 @@ window.joinRoom = function(rid) {
   
   // Cập nhật dữ liệu người chơi lên Firebase
   playerRef.set({ 
-    x, y, hp, energy, 
-    name: userName, 
+    x, y, 
+    hp, maxHp,
+    energy, 
+    name: userName,
+    character: selectedCharacter,
+    weapon: selectedWeapon,
     attacking: false, 
     skill_ready: false, 
     direction,
-    shield // Lưu trạng thái giáp lên firebase
+    shield,
+    baseSpeed,
+    armorBonus: CHARACTERS[selectedCharacter].armorBonus || 0,
+    speedBonus: CHARACTERS[selectedCharacter].speedBonus || 0,
+    energyBonus: CHARACTERS[selectedCharacter].energyBonus || 0
   });
   
   // Thiết lập cleanup khi disconnect
@@ -211,11 +318,15 @@ window.joinRoom = function(rid) {
   // Đăng ký lại các listener
   if (window._playersListener) window._playersListener.off();
   if (window._bulletsListener) window._bulletsListener.off();
+  if (window._itemsListener) window._itemsListener.off();
   
   window._playersListener = db.ref(`rooms/${roomId}/players`);
   window._bulletsListener = db.ref(`rooms/${roomId}/bullets`);
+  window._itemsListener = db.ref(`rooms/${roomId}/items`);
+  
   window._playersListener.on("value", renderPlayers);
   window._bulletsListener.on("value", bulletsListener);
+  window._itemsListener.on("value", renderItems);
   
   // Khởi động game loop nếu chưa chạy
   if (!window._gameStarted) { 
@@ -438,8 +549,13 @@ function setupKeyListeners() {
       shoot();
     }
     if (["k", "1", "л", "Л"].includes(e.key)) useSkill();
-    // Tạo giáp khi bấm l hoặc 2
     if (["l", "2", "д", "Д"].includes(e.key)) createShield();
+    // Chuyển đổi vũ khí và skill
+    if (e.key >= "1" && e.key <= "6") currentWeapon = parseInt(e.key) - 1;
+    if (e.key === "Tab") {
+      e.preventDefault();
+      currentSkill = (currentSkill + 1) % SKILLS.length;
+    }
   };
   window.onkeyup = e => {
     keys[e.key] = false;
@@ -458,13 +574,33 @@ let lastSentX = x, lastSentY = y, lastSentDir = direction;
 let lastUpdateTime = 0;
 
 function gameLoop() {
+  // Performance monitoring
+  monitorPerformance();
+  
   let moved = false;
   let nextX = x, nextY = y;
-  // Di chuyển cho mọi ngôn ngữ
-  if (keys["a"] || keys["ArrowLeft"] || keys["ф"] || keys["Ф"] || keys["щ"] || keys["Щ"]) { nextX -= 4; moved = true; direction = "left"; }
-  if (keys["d"] || keys["ArrowRight"] || keys["в"] || keys["В"]) { nextX += 4; moved = true; direction = "right"; }
-  if (keys["w"] || keys["ArrowUp"] || keys["ц"] || keys["Ц"]) { nextY += 4; moved = true; }
-  if (keys["s"] || keys["ArrowDown"] || keys["ы"] || keys["Ы"]) { nextY -= 4; moved = true; }
+  const timestamp = Date.now();
+  const baseSpeed = window._speedBoost ? 6 : 4;
+  
+  // Movement with anti-cheat validation
+  if (keys["a"] || keys["ArrowLeft"] || keys["ф"] || keys["Ф"] || keys["щ"] || keys["Щ"]) { 
+    nextX -= baseSpeed; 
+    moved = true; 
+    direction = "left"; 
+  }
+  if (keys["d"] || keys["ArrowRight"] || keys["в"] || keys["В"]) { 
+    nextX += baseSpeed; 
+    moved = true; 
+    direction = "right"; 
+  }
+  if (keys["w"] || keys["ArrowUp"] || keys["ц"] || keys["Ц"]) { 
+    nextY += baseSpeed; 
+    moved = true; 
+  }
+  if (keys["s"] || keys["ArrowDown"] || keys["ы"] || keys["Ы"]) { 
+    nextY -= baseSpeed; 
+    moved = true; 
+  }
   // Lấy kích thước động của game-container
   const container = document.getElementById("game-container");
   const maxX = container ? container.clientWidth - 50 : 750;
@@ -483,20 +619,92 @@ function gameLoop() {
     }
   }
   if (moved && !blocked) {
-    x = nextX;
-    y = nextY;
+    // Anti-cheat position validation
+    const now = Date.now();
+    const moveSpeed = window._speedBoost ? 6 : 4;
+    const maxMove = moveSpeed * (now - lastUpdateTime) / 16; // Max move distance per frame
+    
+    const dx = nextX - x;
+    const dy = nextY - y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance <= maxMove) {
+      // Apply map effects
+      if (window._slippery) {
+        // Ice map: momentum
+        x += dx * 1.2;
+        y += dy * 1.2;
+      } else if (window._sandstorm) {
+        // Desert map: random drift
+        x = nextX + (Math.random() - 0.5) * 2;
+        y = nextY + (Math.random() - 0.5) * 2;
+      } else {
+        x = nextX;
+        y = nextY;
+      }
+      
+      // Keep player in bounds
+      x = Math.max(0, Math.min(maxX, x));
+      y = Math.max(0, Math.min(maxY, y));
+      
+      // Update position if enough time has passed
+      if (now - lastUpdateTime > 50) {
+        playerRef.update({ 
+          x, y, 
+          moving: moved, 
+          direction,
+          lastUpdate: now // For anti-cheat verification
+        });
+        lastSentX = x;
+        lastSentY = y;
+        lastSentDir = direction;
+        lastUpdateTime = now;
+      }
+    }
   }
-  // Chỉ update Firebase nếu vị trí hoặc hướng thay đổi, và không quá 20ms/lần
-  const now = Date.now();
-  if ((x !== lastSentX || y !== lastSentY || direction !== lastSentDir || moved !== false) && now - lastUpdateTime > 20) {
-    playerRef.update({ x, y, moving: moved, direction });
-    lastSentX = x;
-    lastSentY = y;
-    lastSentDir = direction;
-    lastUpdateTime = now;
+  
+  // Apply speed boost if active
+  if (window._speedBoost) {
+    x = Math.max(0, Math.min(maxX, x + (direction === "right" ? 2 : -2)));
   }
+  
   updateBullets();
   renderBullets();
+  
+  // Check for item pickups
+  if (roomId && playerRef) {
+    db.ref(`rooms/${roomId}/items`).once("value", snap => {
+      snap.forEach(i => {
+        const item = i.val();
+        const dx = item.x - x;
+        const dy = item.y - y;
+        if (Math.abs(dx) < 30 && Math.abs(dy) < 30) {
+          // Apply item effect
+          switch(item.effect) {
+            case 'heal':
+              hp = Math.min(MAX_HP, hp + item.amount);
+              playerRef.update({ hp });
+              break;
+            case 'energy':
+              energy = Math.min(MAX_ENERGY, energy + item.amount);
+              playerRef.update({ energy });
+              break;
+            case 'speed':
+              window._speedBoost = true;
+              setTimeout(() => window._speedBoost = false, item.duration);
+              break;
+            case 'shield':
+              shield = Math.min(MAX_SHIELD, shield + item.amount);
+              playerRef.update({ shield });
+              break;
+          }
+          // Remove the item
+          i.ref.remove();
+        }
+      });
+    });
+  }
+  
   requestAnimationFrame(gameLoop);
 }
 
@@ -536,57 +744,112 @@ function checkHit() {
 
 // Đẩy đạn lên Firebase thay vì lưu local
 function shoot() {
-  // Đạn thường
+  const weapon = WEAPONS[currentWeapon];
+  if (!weapon) return;
+
+  // Check cooldown modified by character type
+  const now = Date.now();
+  const modifiedCooldown = selectedCharacter === 'scout' ? 
+    weapon.cooldown * 0.8 : weapon.cooldown;
+  if (window._lastShot && now - window._lastShot < modifiedCooldown) return;
+  window._lastShot = now;
+
+  // Check energy cost with mage bonus
+  const energyCost = selectedCharacter === 'mage' ? 
+    Math.floor(weapon.energy * 0.7) : weapon.energy;
+  if ((energy || 0) < energyCost) return;
+  energy = Math.max(0, energy - energyCost);
+  playerRef.update({ energy });
+  
+  const baseDamage = weapon.damage * (window._doubleDamage ? 2 : 1);
+  
   const bullet = {
     x: direction === "right" ? x + 40 : x - 10,
     y: y + 20,
     dir: direction,
     owner: playerId,
-    time: Date.now(),
-    type: "normal"
+    time: now,
+    type: weapon.name.toLowerCase(),
+    dmg: baseDamage,
+    speed: weapon.speed
   };
-  db.ref(`rooms/${roomId}/bullets`).push(bullet);
-  // Tăng năng lượng khi bắn thường (1 điểm mỗi lần bắn)
+
+  // Special weapon effects
+  switch(weapon.name) {
+    case "Shotgun":
+      // Spread shot - 3 bullets with reduced damage
+      for (let i = -1; i <= 1; i++) {
+        const spread = { 
+          ...bullet, 
+          y: bullet.y + i * 15,
+          dmg: Math.floor(baseDamage * 0.6)  // Each pellet does 60% damage
+        };
+        db.ref(`rooms/${roomId}/bullets`).push(spread);
+      }
+      break;
+      
+    case "Sniper":
+      // Pierce through obstacles
+      bullet.pierce = true;
+      bullet.dmg *= 1.2; // 20% bonus damage
+      db.ref(`rooms/${roomId}/bullets`).push(bullet);
+      break;
+      
+    case "Plasma":
+      // Energy weapon - does more damage with more energy
+      bullet.dmg *= (1 + energy/MAX_ENERGY);
+      bullet.energyWeapon = true;
+      db.ref(`rooms/${roomId}/bullets`).push(bullet);
+      break;
+      
+    case "Rocket":
+      // Explosive damage in area
+      bullet.explosive = true;
+      bullet.radius = 80;
+      db.ref(`rooms/${roomId}/bullets`).push(bullet);
+      break;
+      
+    default:
+      // Standard bullet
+      db.ref(`rooms/${roomId}/bullets`).push(bullet);
+  }
+
+  // Gain some energy back from shooting
   playerRef.once("value", snap => {
-    let e = (snap.val().energy || 0) + 1;
+    let e = energy + 1;
     if (e > MAX_ENERGY) e = MAX_ENERGY;
-    playerRef.update({ energy: e, skill_ready: e >= 2 });  // Chỉ cần 2 năng lượng để dùng skill
+    energy = e;
+    playerRef.update({ energy: e, skill_ready: e >= 2 });
   });
 }
 
-// Bắn kỹ năng đặc biệt
+// Sử dụng kỹ năng đặc biệt
 function useSkill() {
   playerRef.once("value", snap => {
     const data = snap.val();
-    if ((data.energy || 0) >= 2) {  // Chỉ cần 2 năng lượng để dùng skill
-      // Đạn đặc biệt
-      const bullet = {
-        x: direction === "right" ? x + 40 : x - 10,
-        y: y + 20,
-        dir: direction,
-        owner: playerId,
-        time: Date.now(),
-        special: true
-      };
-      db.ref(`rooms/${roomId}/bullets`).push(bullet);
-      playerRef.update({ energy: data.energy - 2, skill_ready: false });  // Trừ 2 năng lượng
+    if ((data.energy || 0) >= 2) {
+      const skill = SKILLS[currentSkill];
+      if (skill) {
+        skill.use(data);
+        playerRef.update({ energy: data.energy - 2, skill_ready: false });
+      }
     }
   });
 }
 
 function updateBullets() {
-  const speed = 10;
   const bulletsToRemove = [];
 
   bullets = bullets.filter(b => {
     if (b.owner === playerId) {
-      b.x += b.dir === "right" ? speed : -speed;
+      // Use bullet's own speed
+      b.x += b.dir === "right" ? b.speed : -b.speed;
       
-      // Kiểm tra va chạm obstacle
-      const bulletWidth = b.special ? 32 : 12;
-      const bulletHeight = b.special ? 32 : 12;
+      // Get bullet dimensions based on type
+      const bulletWidth = b.type === 'rocket' ? 20 : (b.type === 'plasma' ? 12 : 8);
+      const bulletHeight = b.type === 'rocket' ? 10 : (b.type === 'plasma' ? 12 : 8);
       
-      // Kiểm tra va chạm với chướng ngại vật
+      // Check obstacle collisions
       for (const o of obstacles) {
         if (
           b.x < o.x + o.w &&
@@ -594,8 +857,14 @@ function updateBullets() {
           b.y < o.y + o.h &&
           b.y + bulletHeight > o.y
         ) {
-          bulletsToRemove.push(b._key);
-          return false;
+          // Pierce bullets ignore obstacles
+          if (!b.pierce) {
+            if (b.explosive) {
+              createExplosion(b.x, b.y, b.radius || 80, b.dmg);
+            }
+            bulletsToRemove.push(b._key);
+            return false;
+          }
         }
       }
       // Xóa đạn nếu ra khỏi màn hình
@@ -617,17 +886,41 @@ function updateBullets() {
             }
             if (hit) {
               // Shield logic: mỗi lớp giáp chặn 10 damage, mất 1 lớp mỗi lần trúng, còn lại trừ vào máu
+              // Anti-cheat damage validation
+              const now = Date.now();
+              const timeSinceLastHit = now - (data.lastHitTime || 0);
+              
+              if (timeSinceLastHit < 100) {
+                console.warn('Rapid damage detected');
+                return;
+              }
+              
               let dmg = b.special ? 10 : 5;
+              
+              // Validate damage amount
+              if (dmg > 50) {
+                console.warn('Invalid damage amount detected');
+                dmg = 50;
+              }
+              
               let shield = data.shield || 0;
               let hp = data.hp || 0;
+              
               if (shield > 0) {
                 dmg -= 10;
                 shield -= 1;
                 if (dmg < 0) dmg = 0;
-                db.ref(`rooms/${roomId}/players/${p.key}`).update({ shield });
+                db.ref(`rooms/${roomId}/players/${p.key}`).update({ 
+                  shield,
+                  lastHitTime: now 
+                });
               }
+              
               if (dmg > 0) {
-                db.ref(`rooms/${roomId}/players/${p.key}/hp`).transaction(hp => Math.max(0, (hp || 0) - dmg));
+                db.ref(`rooms/${roomId}/players/${p.key}`).update({
+                  hp: Math.max(0, hp - dmg),
+                  lastHitTime: now
+                });
               }
               hitPlayer = true;
             }
@@ -659,15 +952,58 @@ function renderBullets() {
   // Vẽ đạn mới
   bullets.forEach(b => {
     const el = document.createElement('div');
-    if (b.special) {
-      el.className = 'bullet special-bullet';
-      el.style.width = '32px';
-      el.style.height = '32px';
-      el.style.boxShadow = '0 0 16px 8px #0af8';
-      el.style.background = 'radial-gradient(circle, #0af 60%, #fff0 100%)';
-    } else {
-      el.className = 'bullet';
+    el.className = 'bullet';
+    
+    // Style based on bullet type
+    switch(b.type) {
+      case "shotgun":
+        el.style.width = '8px';
+        el.style.height = '8px';
+        el.style.borderRadius = '50%';
+        el.style.background = '#fa0';
+        el.style.boxShadow = '0 0 8px 2px #fa0';
+        break;
+        
+      case "sniper":
+        el.style.width = '16px';
+        el.style.height = '4px';
+        el.style.background = '#f00';
+        el.style.boxShadow = '0 0 8px 2px #f00';
+        break;
+        
+      case "plasma":
+        el.style.width = '12px';
+        el.style.height = '12px';
+        el.style.borderRadius = '50%';
+        el.style.background = '#0ff';
+        el.style.boxShadow = '0 0 12px 4px #0ff';
+        el.style.animation = 'pulse 0.5s infinite alternate';
+        break;
+        
+      case "rocket":
+        el.style.width = '20px';
+        el.style.height = '10px';
+        el.style.background = '#f44';
+        el.style.boxShadow = '0 0 8px 2px #f44';
+        el.style.borderRadius = '4px';
+        // Add rocket trail
+        const trail = document.createElement('div');
+        trail.style.position = 'absolute';
+        trail.style.right = '100%';
+        trail.style.top = '50%';
+        trail.style.width = '20px';
+        trail.style.height = '2px';
+        trail.style.background = 'linear-gradient(90deg, #ff0, transparent)';
+        el.appendChild(trail);
+        break;
+        
+      default: // Pistol and Rifle
+        el.style.width = '12px';
+        el.style.height = '6px';
+        el.style.background = b.type === 'rifle' ? '#ff0' : '#fa0';
+        el.style.boxShadow = `0 0 6px 2px ${b.type === 'rifle' ? '#ff0' : '#fa0'}`;
     }
+    
     el.style.left = b.x + 'px';
     el.style.bottom = b.y + 'px';
     container.appendChild(el);

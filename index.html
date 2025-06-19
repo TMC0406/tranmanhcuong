@@ -188,7 +188,15 @@
         {x: 0.1, y: -0.3, r: 0.2, color: "#2ecc71"}
       ],
       hasRings: false,
-      hasClouds: true
+      hasClouds: true,
+      moon: {
+        size: 5 * 1.5,
+        distance: 5 * 12,
+        speed: 0.05,
+        angle: Math.random() * Math.PI * 2,
+        color: "#d3d3d3",
+        gradient: ["#a9a9a9", "#d3d3d3", "#f5f5f5"]
+      }
     },
     { 
       name: "Mars", 
@@ -373,11 +381,15 @@
       // Mặt trời với hiệu ứng nâng cao
       ctx.save();
       
-      // Vẽ ánh sáng xung quanh
-      const outerGlow = ctx.createRadialGradient(
-        centerX, centerY, 20 * 5 * scale,
-        centerX, centerY, 20 * 8 * scale
-      );
+      // Vẽ ánh sáng động xung quanh mặt trời
+      const time = Date.now() * 0.001;  // Thời gian cho hiệu ứng động
+      const sunRotation = time * 0.1;   // Góc quay của mặt trời
+      
+      for (let i = 0; i < 3; i++) {
+        const outerGlow = ctx.createRadialGradient(
+          centerX, centerY, 20 * 5 * scale,
+          centerX, centerY, (20 * 8 + Math.sin(time + i) * 10) * scale
+        );
       outerGlow.addColorStop(0, 'rgba(255, 255, 190, 0.3)');
       outerGlow.addColorStop(1, 'rgba(255, 255, 190, 0)');
       ctx.beginPath();
@@ -385,16 +397,22 @@
       ctx.fillStyle = outerGlow;
       ctx.fill();
 
-      // Vẽ mặt trời với gradient phức tạp
+      // Vẽ mặt trời với gradient phức tạp và hiệu ứng quay
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(sunRotation);
+      
       const sunGradient = ctx.createRadialGradient(
-        centerX - 20 * scale, centerY - 20 * scale, 0,
-        centerX, centerY, 20 * 5 * scale
+        -20 * scale, -20 * scale, 0,
+        0, 0, 20 * 5 * scale
       );
+      // Gradient động theo thời gian
+      const hue = Math.sin(time * 0.2) * 10;
       sunGradient.addColorStop(0, '#ffffff');    // Trung tâm trắng
-      sunGradient.addColorStop(0.2, '#fff7e6');  // Chuyển sang vàng nhạt
-      sunGradient.addColorStop(0.5, '#ffdb4d');  // Vàng
-      sunGradient.addColorStop(0.8, '#ff9900');  // Cam
-      sunGradient.addColorStop(1, '#ff6600');    // Cam đậm ở viền
+      sunGradient.addColorStop(0.2, `hsl(${40 + hue}, 100%, 95%)`);  // Vàng nhạt động
+      sunGradient.addColorStop(0.5, `hsl(${45 + hue}, 100%, 65%)`);  // Vàng động
+      sunGradient.addColorStop(0.8, `hsl(${30 + hue}, 100%, 50%)`);  // Cam động
+      sunGradient.addColorStop(1, `hsl(${20 + hue}, 100%, 45%)`);    // Cam đậm động
       
       ctx.beginPath();
       ctx.arc(centerX, centerY, 20 * 5 * scale, 0, Math.PI * 2);
@@ -534,6 +552,38 @@
           }
           ctx.fillStyle = 'rgba(255,255,255,0.3)';
           ctx.fill();
+        }
+        
+        // Vẽ mặt trăng nếu hành tinh là Trái Đất
+        if (p.moon) {
+          const moonAngle = p.moon.angle;
+          const moonX = x + Math.cos(moonAngle) * (p.moon.distance * scale);
+          const moonY = y + Math.sin(moonAngle) * (p.moon.distance * scale);
+          
+          // Vẽ quỹ đạo mặt trăng
+          ctx.beginPath();
+          ctx.arc(x, y, p.moon.distance * scale, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(255,255,255,0.1)";
+          ctx.stroke();
+          
+          // Vẽ mặt trăng
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, p.moon.size * scale, 0, Math.PI * 2);
+          
+          // Gradient cho mặt trăng
+          const moonGradient = ctx.createRadialGradient(
+            moonX - (p.moon.size * scale)/3, moonY - (p.moon.size * scale)/3, 0,
+            moonX, moonY, p.moon.size * scale
+          );
+          moonGradient.addColorStop(0, p.moon.gradient[2]); // Highlight
+          moonGradient.addColorStop(0.5, p.moon.gradient[1]); // Main color
+          moonGradient.addColorStop(1, p.moon.gradient[0]); // Shadow
+          
+          ctx.fillStyle = moonGradient;
+          ctx.fill();
+          
+          // Cập nhật vị trí mặt trăng
+          p.moon.angle += p.moon.speed;
         }
         
         ctx.restore();

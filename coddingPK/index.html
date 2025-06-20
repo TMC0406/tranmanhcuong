@@ -59,6 +59,27 @@
     <button id="login-btn">Vào game</button>
   </div>
   <div id="room-panel" style="display:none">
+    <!-- Current selection display -->
+    <div class="current-selection">
+      <h4>Lựa chọn hiện tại</h4>
+      <div class="selection-item" onclick="openCharacterModal()">
+        <div class="selection-preview char-preview warrior" id="current-char-preview"></div>
+        <div class="selection-info">
+          <div class="name" id="current-char-name">Warrior</div>
+          <div class="stats" id="current-char-stats">HP: 150, Giáp +20%</div>
+        </div>
+        <button class="change-btn">Đổi</button>
+      </div>
+      <div class="selection-item" onclick="openWeaponModal()">
+        <div class="selection-preview weapon-preview pistol" id="current-weapon-preview"></div>
+        <div class="selection-info">
+          <div class="name" id="current-weapon-name">Pistol</div>
+          <div class="stats" id="current-weapon-stats">Cân bằng</div>
+        </div>
+        <button class="change-btn">Đổi</button>
+      </div>
+    </div>
+
     <h2>Chọn phòng</h2>
     <div class="map-select">
       <div class="map-option" data-map="classic">
@@ -111,6 +132,63 @@
       </div>
     </div>
   </div>
+
+  <!-- Character selection modal -->
+  <div id="character-modal" class="selection-modal">
+    <div class="modal-content">
+      <h3>Chọn nhân vật</h3>
+      <div class="modal-grid">
+        <div class="character-option" data-char="warrior">
+          <div class="char-preview warrior"></div>
+          <h4>Warrior</h4>
+          <p>HP: 150, Giáp +20%</p>
+        </div>
+        <div class="character-option" data-char="scout">
+          <div class="char-preview scout"></div>
+          <h4>Scout</h4>
+          <p>Tốc độ +20%, HP: 100</p>
+        </div>
+        <div class="character-option" data-char="mage">
+          <div class="char-preview mage"></div>
+          <h4>Mage</h4>
+          <p>Năng lượng +30%, HP: 80</p>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="confirm-btn" onclick="confirmCharacterChange()">Xác nhận</button>
+        <button class="cancel-btn" onclick="closeCharacterModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weapon selection modal -->
+  <div id="weapon-modal" class="selection-modal">
+    <div class="modal-content">
+      <h3>Chọn vũ khí</h3>
+      <div class="modal-grid">
+        <div class="weapon-option" data-weapon="pistol">
+          <div class="weapon-preview pistol"></div>
+          <h4>Pistol</h4>
+          <p>Cân bằng</p>
+        </div>
+        <div class="weapon-option" data-weapon="shotgun">
+          <div class="weapon-preview shotgun"></div>
+          <h4>Shotgun</h4>
+          <p>Sát thương gần</p>
+        </div>
+        <div class="weapon-option" data-weapon="rifle">
+          <div class="weapon-preview rifle"></div>
+          <h4>Rifle</h4>
+          <p>Tấn công xa</p>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="confirm-btn" onclick="confirmWeaponChange()">Xác nhận</button>
+        <button class="cancel-btn" onclick="closeWeaponModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
   <script src="firebase-config.js"></script>
   <script src="game.js"></script>
 </body>

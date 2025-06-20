@@ -59,7 +59,33 @@ const ITEMS = [
   { id: 3, name: "Shield", effect: "shield", amount: 1 }
 ];
 
+const CHARACTERS = {
+  warrior: {
+    baseHp: 150,
+    baseSpeed: 5,
+    armorBonus: 0.2, // +20% armor
+    speedBonus: 0,
+    energyBonus: 0
+  },
+  scout: {
+    baseHp: 100,
+    baseSpeed: 6, // +20% speed
+    armorBonus: 0,
+    speedBonus: 0.2,
+    energyBonus: 0
+  },
+  mage: {
+    baseHp: 80,
+    baseSpeed: 5,
+    armorBonus: 0,
+    speedBonus: 0,
+    energyBonus: 0.3 // -30% energy cost
+  }
+};
+
 let userName = "";
+let selectedCharacter = "warrior"; // Mặc định warrior
+let selectedWeapon = "pistol"; // Mặc định pistol
 let roomId = null;
 let playerId = null;
 let playerRef = null;
@@ -96,6 +122,9 @@ loginBtn.onclick = () => {
   userName = name;
   showPanel("room");
   loadRoomList();
+  
+  // Update current selection display in room panel
+  updateCurrentSelection();
 };
 
 // Map definitions
@@ -119,37 +148,176 @@ const MAPS = [
       { x: 520, y: 150, w: 80, h: 40 },
       { x: 360, y: 300, w: 80, h: 40 }
     ]
+  },
+  {
+    id: 'ice',
+    name: 'Ice Field',
+    background: '#adf',
+    obstacles: [
+      { x: 150, y: 80, w: 50, h: 100 },
+      { x: 350, y: 200, w: 100, h: 50 },
+      { x: 600, y: 120, w: 50, h: 80 },
+      { x: 250, y: 350, w: 80, h: 50 },
+      { x: 480, y: 80, w: 60, h: 60 }
+    ]
   }
 ];
+
+// Biến để lưu bản đồ được chọn
+let selectedMap = null;
 
 // Tạo phòng mới với map được chọn
 const createRoomBtn = document.getElementById("create-room-btn");
 createRoomBtn.onclick = () => {
-  const newRoomId = "room-" + Math.floor(Math.random() * 100000);
-  const selectedMap = MAPS[Math.floor(Math.random() * MAPS.length)];
-  const obstacles = JSON.parse(JSON.stringify(selectedMap.obstacles));
-  while (obstacles.length < numObs && tries < 1000) {
-    tries++;
-    const w = 40 + Math.floor(Math.random() * 60);
-    const h = 40 + Math.floor(Math.random() * 60);
-    const x = Math.floor(Math.random() * 600) + 50;
-    const y = Math.floor(Math.random() * 300) + 50;
-    // Không sát obstacle khác (cách nhau ít nhất 30px)
-    let overlap = false;
-    for (const o of obstacles) {
-      if (
-        x + w + 30 > o.x && x < o.x + o.w + 30 &&
-        y + h + 30 > o.y && y < o.y + o.h + 30
-      ) {
-        overlap = true;
-        break;
-      }
-    }
-    if (!overlap) obstacles.push({ x, y, w, h });
-  }
-  db.ref(`rooms/${newRoomId}`).set({ created: Date.now(), obstacles, players: {} });
-  joinRoom(newRoomId);
+  // Hiển thị giao diện chọn bản đồ
+  showMapSelection();
 };
+
+// Hiển thị giao diện chọn bản đồ
+function showMapSelection() {
+  const mapSelect = document.querySelector('.map-select');
+  mapSelect.style.display = 'block';
+  
+  // Thêm style cho map selection nếu chưa có
+  if (!document.querySelector('.map-select-styles')) {
+    const style = document.createElement('style');
+    style.className = 'map-select-styles';
+    style.textContent = `
+      .map-select {
+        display: none;
+        margin: 20px 0;
+        padding: 20px;
+        border: 2px solid #555;
+        border-radius: 10px;
+        background: #333;
+      }
+      .map-option {
+        margin: 10px 0;
+        padding: 15px;
+        border: 2px solid #666;
+        border-radius: 8px;
+        background: #444;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .map-option:hover {
+        border-color: #0ff;
+        background: #555;
+        transform: scale(1.02);
+      }
+      .map-option.selected {
+        border-color: #0f0;
+        background: #464;
+      }
+      .map-option h3 {
+        margin: 0 0 8px 0;
+        color: #fff;
+      }
+      .map-option p {
+        margin: 0;
+        color: #ccc;
+        font-size: 14px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Thêm nút xác nhận và hủy
+  let confirmBtn = document.getElementById('confirm-map-btn');
+  let cancelBtn = document.getElementById('cancel-map-btn');
+  
+  if (!confirmBtn) {
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.marginTop = '20px';
+    buttonContainer.style.textAlign = 'center';
+    
+    confirmBtn = document.createElement('button');
+    confirmBtn.id = 'confirm-map-btn';
+    confirmBtn.textContent = 'Tạo phòng';
+    confirmBtn.style.marginRight = '10px';
+    confirmBtn.style.padding = '10px 20px';
+    confirmBtn.style.backgroundColor = '#0a0';
+    confirmBtn.style.color = 'white';
+    confirmBtn.style.border = 'none';
+    confirmBtn.style.borderRadius = '5px';
+    confirmBtn.style.cursor = 'pointer';
+    
+    cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancel-map-btn';
+    cancelBtn.textContent = 'Hủy';
+    cancelBtn.style.padding = '10px 20px';
+    cancelBtn.style.backgroundColor = '#a00';
+    cancelBtn.style.color = 'white';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.borderRadius = '5px';
+    cancelBtn.style.cursor = 'pointer';
+    
+    buttonContainer.appendChild(confirmBtn);
+    buttonContainer.appendChild(cancelBtn);
+    mapSelect.appendChild(buttonContainer);
+  }
+  
+  // Lắng nghe sự kiện chọn bản đồ
+  const mapOptions = document.querySelectorAll('.map-option');
+  mapOptions.forEach(option => {
+    option.onclick = () => {
+      // Bỏ selected từ tất cả options
+      mapOptions.forEach(opt => opt.classList.remove('selected'));
+      // Thêm selected cho option được chọn
+      option.classList.add('selected');
+      selectedMap = option.dataset.map;
+    };
+  });
+  
+  // Lắng nghe nút xác nhận
+  confirmBtn.onclick = () => {
+    if (!selectedMap) {
+      alert('Vui lòng chọn bản đồ!');
+      return;
+    }
+    createRoomWithSelectedMap();
+  };
+  
+  // Lắng nghe nút hủy
+  cancelBtn.onclick = () => {
+    hideMapSelection();
+  };
+}
+
+// Ẩn giao diện chọn bản đồ
+function hideMapSelection() {
+  const mapSelect = document.querySelector('.map-select');
+  mapSelect.style.display = 'none';
+  selectedMap = null;
+  
+  // Bỏ selected từ tất cả options
+  const mapOptions = document.querySelectorAll('.map-option');
+  mapOptions.forEach(opt => opt.classList.remove('selected'));
+}
+
+// Tạo phòng với bản đồ đã chọn
+function createRoomWithSelectedMap() {
+  const newRoomId = "room-" + Math.floor(Math.random() * 100000);
+  
+  // Lấy thông tin bản đồ được chọn
+  const mapData = MAPS.find(m => m.id === selectedMap) || MAPS[0];
+  const obstacles = JSON.parse(JSON.stringify(mapData.obstacles));
+  
+  // Tạo phòng với bản đồ đã chọn
+  db.ref(`rooms/${newRoomId}`).set({ 
+    created: Date.now(), 
+    obstacles, 
+    players: {},
+    mapId: selectedMap,
+    mapName: mapData.name
+  });
+  
+  // Ẩn giao diện chọn bản đồ
+  hideMapSelection();
+  
+  // Tham gia phòng
+  joinRoom(newRoomId);
+}
 
 // Hiển thị danh sách phòng
 function loadRoomList() {
@@ -523,9 +691,23 @@ function renderObstacles(obsArr) {
 // Lắng nghe obstacle khi vào phòng
 function listenObstacles() {
   if (!roomId) return;
-  db.ref(`rooms/${roomId}/obstacles`).on('value', snap => {
-    obstacles = snap.val() || [];
-    renderObstacles(obstacles);
+  
+  // Lắng nghe thông tin phòng để lấy mapId
+  db.ref(`rooms/${roomId}`).on('value', snap => {
+    const roomData = snap.val();
+    if (roomData) {
+      obstacles = roomData.obstacles || [];
+      renderObstacles(obstacles);
+      
+      // Áp dụng background theo bản đồ
+      if (roomData.mapId) {
+        const mapData = MAPS.find(m => m.id === roomData.mapId);
+        if (mapData) {
+          const gameContainer = document.getElementById('game-container');
+          gameContainer.style.background = mapData.background;
+        }
+      }
+    }
   });
 }
 
@@ -1010,134 +1192,30 @@ function renderBullets() {
   });
 }
 
-db.ref(`rooms/${roomId}/players`).on("value", snap => {
-  const container = document.getElementById("game-container");
-  // container.innerHTML = "";
-  // Xóa chỉ các player cũ
-  const oldPlayers = container.querySelectorAll('.player, .enemy');
-  oldPlayers.forEach(p => p.remove());
-  let currentPlayer = null;
-  snap.forEach(p => {
-    const data = p.val();
-    let dirClass = data.direction === "left" ? " left" : " right";
-    const div = document.createElement("div");
-    div.className = (p.key === playerId ? "player" : "enemy") + (data.moving ? " moving" : "") + dirClass;
-    div.id = p.key === playerId ? "player" : "";
-    div.style.left = data.x + "px";
-    div.style.bottom = data.y + "px";
-    // Thêm các phần tử con để tạo hình người
-    const head = document.createElement("div");
-    head.className = "head";
-    const eyeL = document.createElement("div");
-    eyeL.className = "eye left";
-    const eyeR = document.createElement("div");
-    eyeR.className = "eye right";
-    const body = document.createElement("div");
-    body.className = "body";
-    const armL = document.createElement("div");
-    armL.className = "arm left";
-    const gunL = document.createElement("div");
-    gunL.className = "gun";
-    armL.appendChild(gunL);
-    const armR = document.createElement("div");
-    armR.className = "arm right";
-    const gunR = document.createElement("div");
-    gunR.className = "gun";
-    armR.appendChild(gunR);
-    const legL = document.createElement("div");
-    legL.className = "leg left";
-    const legR = document.createElement("div");
-    legR.className = "leg right";
-    head.appendChild(eyeL);
-    head.appendChild(eyeR);
-    div.appendChild(head);
-    div.appendChild(body);
-    div.appendChild(armL);
-    div.appendChild(armR);
-    div.appendChild(legL);
-    div.appendChild(legR);
-    // Thêm wrapper cho tên và thanh máu
-    const statsWrap = document.createElement("div");
-    statsWrap.style.position = "absolute";
-    statsWrap.style.left = "-5px";
-    statsWrap.style.bottom = "54px";
-    statsWrap.style.width = "60px";
-    statsWrap.style.height = "26px";  // Tăng chiều cao để chứa tên
-    statsWrap.style.pointerEvents = "none";
-    statsWrap.style.display = "flex";
-    statsWrap.style.flexDirection = "column";
-    statsWrap.style.alignItems = "center";
-    statsWrap.style.justifyContent = "flex-end";
-    
-    // Tên nhân vật
-    const nameDiv = document.createElement("div");
-    nameDiv.style.color = "#fff";
-    nameDiv.style.fontSize = "10px";
-    nameDiv.style.textAlign = "center";
-    nameDiv.style.marginBottom = "2px";
-    nameDiv.style.textShadow = "0 0 2px #000";
-    nameDiv.textContent = data.name || "???";
-    
-    // Thanh máu và năng lượng
-    const barWrap = document.createElement("div");
-    barWrap.style.height = "16px";
-    
-    // Thanh máu
-    const hpBar = document.createElement("div");
-    hpBar.style.height = "7px";
-    hpBar.style.width = Math.max(0, Math.min(1, data.hp/MAX_HP)) * 50 + "px";
-    hpBar.style.background = "#f00";
-    hpBar.style.border = "1px solid #fff3";
-    hpBar.style.borderRadius = "4px";
-    hpBar.style.marginBottom = "2px";
-    
-    // Thanh năng lượng
-    const mnBar = document.createElement("div");
-    mnBar.style.height = "5px";
-    mnBar.style.width = Math.max(0, Math.min(1, (data.energy||0)/MAX_ENERGY)) * 50 + "px";
-    mnBar.style.background = "#09f";
-    mnBar.style.border = "1px solid #fff3";
-    mnBar.style.borderRadius = "4px";
-    
-    barWrap.appendChild(hpBar);
-    barWrap.appendChild(mnBar);
-    statsWrap.appendChild(nameDiv);
-    statsWrap.appendChild(barWrap);
-    div.appendChild(statsWrap);
-    container.appendChild(div);
-    
-    // Hiển thị số lớp giáp (cũ)
-    // const shieldDiv = document.createElement("div");
-    // shieldDiv.style.color = "#0ff";
-    // shieldDiv.style.fontSize = "10px";
-    // shieldDiv.style.textAlign = "center";
-    // shieldDiv.style.marginBottom = "1px";
-    // shieldDiv.style.textShadow = "0 0 2px #000";
-    // shieldDiv.textContent = data.shield ? `🛡️ x${data.shield}` : "";
-    // statsWrap.insertBefore(shieldDiv, nameDiv.nextSibling);
+// Thêm event listeners cho việc chọn character và weapon
+document.addEventListener('DOMContentLoaded', () => {
+  // Character selection
+  const characterOptions = document.querySelectorAll('.character-option');
+  characterOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      // Bỏ selected từ tất cả character options
+      characterOptions.forEach(opt => opt.classList.remove('selected'));
+      // Thêm selected cho option được chọn
+      option.classList.add('selected');
+      selectedCharacter = option.dataset.char || 'warrior';
+    });
+  });
 
-    // Vẽ giáp dạng vòng tròn bao quanh nhân vật
-    if (data.shield && data.shield > 0) {
-      for (let i = 0; i < data.shield; i++) {
-        const shieldCircle = document.createElement("div");
-        shieldCircle.className = "shield-circle";
-        shieldCircle.style.position = "absolute";
-        shieldCircle.style.left = "-10px";
-        shieldCircle.style.top = "-10px";
-        shieldCircle.style.width = "70px";
-        shieldCircle.style.height = "70px";
-        shieldCircle.style.borderRadius = "50%";
-        shieldCircle.style.border = `2.5px solid #0ff`;
-        shieldCircle.style.boxSizing = "border-box";
-        shieldCircle.style.pointerEvents = "none";
-        shieldCircle.style.opacity = (0.18 + 0.18 * i).toFixed(2); // Lớp ngoài cùng mờ nhất
-        shieldCircle.style.zIndex = 10 + i;
-        shieldCircle.style.filter = `blur(${2 * (data.shield - i - 1)}px)`;
-        div.appendChild(shieldCircle);
-      }
-    }
-
-    if (p.key === playerId) currentPlayer = data;
+  // Weapon selection
+  const weaponOptions = document.querySelectorAll('.weapon-option');
+  weaponOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      // Bỏ selected từ tất cả weapon options
+      weaponOptions.forEach(opt => opt.classList.remove('selected'));
+      // Thêm selected cho option được chọn
+      option.classList.add('selected');
+      selectedWeapon = option.dataset.weapon || 'pistol';
+    });
   });
 });
 
@@ -1190,3 +1268,152 @@ function applyShieldDamage(hp, shield, dmg) {
   }
   return { hp: Math.max(0, hp - dmg), shield };
 }
+
+// Character and weapon data for display
+const CHARACTER_INFO = {
+  warrior: { name: "Warrior", stats: "HP: 150, Giáp +20%" },
+  scout: { name: "Scout", stats: "Tốc độ +20%, HP: 100" },
+  mage: { name: "Mage", stats: "Năng lượng +30%, HP: 80" }
+};
+
+const WEAPON_INFO = {
+  pistol: { name: "Pistol", stats: "Cân bằng" },
+  shotgun: { name: "Shotgun", stats: "Sát thương gần" },
+  rifle: { name: "Rifle", stats: "Tấn công xa" }
+};
+
+// Update current selection display
+function updateCurrentSelection() {
+  // Update character display
+  const charPreview = document.getElementById('current-char-preview');
+  const charName = document.getElementById('current-char-name');
+  const charStats = document.getElementById('current-char-stats');
+  
+  charPreview.className = `selection-preview char-preview ${selectedCharacter}`;
+  charName.textContent = CHARACTER_INFO[selectedCharacter].name;
+  charStats.textContent = CHARACTER_INFO[selectedCharacter].stats;
+  
+  // Update weapon display
+  const weaponPreview = document.getElementById('current-weapon-preview');
+  const weaponName = document.getElementById('current-weapon-name');
+  const weaponStats = document.getElementById('current-weapon-stats');
+  
+  weaponPreview.className = `selection-preview weapon-preview ${selectedWeapon}`;
+  weaponName.textContent = WEAPON_INFO[selectedWeapon].name;
+  weaponStats.textContent = WEAPON_INFO[selectedWeapon].stats;
+}
+
+// Modal functions
+let tempSelectedCharacter = null;
+let tempSelectedWeapon = null;
+
+function openCharacterModal() {
+  const modal = document.getElementById('character-modal');
+  modal.style.display = 'flex';
+  tempSelectedCharacter = selectedCharacter;
+  
+  // Update modal character options
+  const options = modal.querySelectorAll('.character-option');
+  options.forEach(option => {
+    option.classList.remove('selected');
+    if (option.dataset.char === selectedCharacter) {
+      option.classList.add('selected');
+    }
+    
+    // Add click event
+    option.onclick = () => {
+      options.forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      tempSelectedCharacter = option.dataset.char;
+    };
+  });
+}
+
+function closeCharacterModal() {
+  const modal = document.getElementById('character-modal');
+  modal.style.display = 'none';
+  tempSelectedCharacter = null;
+}
+
+function confirmCharacterChange() {
+  if (tempSelectedCharacter && tempSelectedCharacter !== selectedCharacter) {
+    selectedCharacter = tempSelectedCharacter;
+    updateCurrentSelection();
+    
+    // Update login panel selection if still there
+    const loginOptions = document.querySelectorAll('#login-panel .character-option');
+    loginOptions.forEach(option => {
+      option.classList.remove('selected');
+      if (option.dataset.char === selectedCharacter) {
+        option.classList.add('selected');
+      }
+    });
+  }
+  closeCharacterModal();
+}
+
+function openWeaponModal() {
+  const modal = document.getElementById('weapon-modal');
+  modal.style.display = 'flex';
+  tempSelectedWeapon = selectedWeapon;
+  
+  // Update modal weapon options
+  const options = modal.querySelectorAll('.weapon-option');
+  options.forEach(option => {
+    option.classList.remove('selected');
+    if (option.dataset.weapon === selectedWeapon) {
+      option.classList.add('selected');
+    }
+    
+    // Add click event
+    option.onclick = () => {
+      options.forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      tempSelectedWeapon = option.dataset.weapon;
+    };
+  });
+}
+
+function closeWeaponModal() {
+  const modal = document.getElementById('weapon-modal');
+  modal.style.display = 'none';
+  tempSelectedWeapon = null;
+}
+
+function confirmWeaponChange() {
+  if (tempSelectedWeapon && tempSelectedWeapon !== selectedWeapon) {
+    selectedWeapon = tempSelectedWeapon;
+    updateCurrentSelection();
+    
+    // Update login panel selection if still there
+    const loginOptions = document.querySelectorAll('#login-panel .weapon-option');
+    loginOptions.forEach(option => {
+      option.classList.remove('selected');
+      if (option.dataset.weapon === selectedWeapon) {
+        option.classList.add('selected');
+      }
+    });
+  }
+  closeWeaponModal();
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+  const charModal = document.getElementById('character-modal');
+  const weaponModal = document.getElementById('weapon-modal');
+  
+  if (event.target === charModal) {
+    closeCharacterModal();
+  }
+  if (event.target === weaponModal) {
+    closeWeaponModal();
+  }
+};
+
+// Make functions global
+window.openCharacterModal = openCharacterModal;
+window.closeCharacterModal = closeCharacterModal;
+window.confirmCharacterChange = confirmCharacterChange;
+window.openWeaponModal = openWeaponModal;
+window.closeWeaponModal = closeWeaponModal;
+window.confirmWeaponChange = confirmWeaponChange;

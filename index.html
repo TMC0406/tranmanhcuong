@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <!-- <link rel="icon" href="favicon.png" type="image/png"> -->
+  <link rel="icon" href="./static/imgs/crown.svg" type="image/png">
   <title>TMC</title>
   <style>
     html, body {
@@ -121,17 +121,30 @@
     let w, h;
     let planets = [];
     
-    // Tạo sao trong dải ngân hà
+    // Tạo sao trong dải ngân hà với hiệu ứng xoáy
     function createGalaxyStar() {
       const angle = Math.random() * Math.PI * 2;
       const radius = Math.random() * 400 + 100;
-      const deviation = (Math.random() - 0.5) * 100;
+      const spiralArms = Math.floor(Math.random() * 4) + 2; // 2-5 cánh xoáy
+      const armIndex = Math.floor(Math.random() * spiralArms);
+      const armAngle = (armIndex * 2 * Math.PI) / spiralArms;
+      const spiralTightness = 0.3; // Độ cuộn của xoáy
+      
+      // Tạo hiệu ứng xoáy bằng cách điều chỉnh góc theo bán kính
+      const spiralOffset = radius * spiralTightness;
+      const finalAngle = armAngle + spiralOffset + (Math.random() - 0.5) * 0.5;
+      
+      const deviation = (Math.random() - 0.5) * 80;
       return {
-        x: w/2 + Math.cos(angle) * (radius + deviation),
-        y: h/2 + Math.sin(angle) * (radius + deviation) * 0.5,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.5 + 0.3,
-        color: `hsl(${Math.random() * 60 + 200}, 80%, 70%)`
+        x: w/2 + Math.cos(finalAngle) * (radius + deviation),
+        y: h/2 + Math.sin(finalAngle) * (radius + deviation) * 0.6,
+        size: Math.random() * 2.5 + 0.3,
+        opacity: Math.random() * 0.6 + 0.2,
+        color: `hsl(${Math.random() * 60 + 200}, ${60 + Math.random() * 40}%, ${60 + Math.random() * 30}%)`,
+        baseAngle: finalAngle,
+        baseRadius: radius + deviation,
+        rotationSpeed: (Math.random() * 0.0003 + 0.0001) * (Math.random() > 0.5 ? 1 : -1),
+        armIndex: armIndex
       };
     }
     
@@ -306,8 +319,8 @@
         galaxyStars = [];
         planets = [];
 
-        // Tạo dải ngân hà
-        for (let i = 0; i < 1000; i++) {
+        // Tạo dải ngân hà với xoáy
+        for (let i = 0; i < 1500; i++) {
           galaxyStars.push(createGalaxyStar());
         }
 
@@ -352,16 +365,103 @@
       currentScale += (targetScale - currentScale) * 0.1;
       const scale = currentScale;
       
+      // Define center coordinates once
+      const centerX = w / 2;
+      const centerY = h / 2;
+      
       ctx.clearRect(0, 0, w, h);
 
-      // Vẽ dải ngân hà
-      galaxyStars.forEach(star => {
+      // Vẽ dải ngân hà với hiệu ứng xoay tăng cường
+      const galaxyRotation = Date.now() * 0.00005; // Tốc độ xoay chậm hơn
+      
+      // Vẽ các cánh xoáy của dải ngân hà
+      const spiralArms = 4;
+      for (let arm = 0; arm < spiralArms; arm++) {
+        const armAngle = (arm * 2 * Math.PI) / spiralArms + galaxyRotation;
+        
+        // Vẽ đường xoáy chính
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.strokeStyle = `hsla(${200 + arm * 15}, 60%, 40%, 0.1)`;
+        ctx.lineWidth = 3;
+        
+        for (let r = 50; r < 500; r += 5) {
+          const spiralAngle = armAngle + r * 0.01;
+          const x = centerX + Math.cos(spiralAngle) * r;
+          const y = centerY + Math.sin(spiralAngle) * r * 0.6;
+          
+          if (r === 50) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+      
+      // Vẽ các sao trong dải ngân hà
+      galaxyStars.forEach(star => {
+        // Cập nhật vị trí xoay của sao với hiệu ứng 3D
+        const rotationFactor = 1 + Math.sin(galaxyRotation + star.armIndex) * 0.1;
+        const currentAngle = star.baseAngle + galaxyRotation * rotationFactor;
+        const radiusVariation = Math.sin(Date.now() * 0.0002 + star.baseAngle) * 10;
+        const currentRadius = star.baseRadius + radiusVariation;
+        
+        const x = centerX + Math.cos(currentAngle) * currentRadius;
+        const y = centerY + Math.sin(currentAngle) * currentRadius * 0.6;
+        
+        // Tạo hiệu ứng nhấp nháy động
+        const twinkle = Math.sin(Date.now() * 0.002 + star.baseAngle * 3) * 0.3 + 0.7;
+        const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+        const densityFactor = Math.max(0.2, 1 - distanceFromCenter / 400);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, star.size * twinkle, 0, Math.PI * 2);
         ctx.fillStyle = star.color;
-        ctx.globalAlpha = star.opacity;
+        ctx.globalAlpha = star.opacity * twinkle * densityFactor;
         ctx.fill();
+        
+        // Thêm hiệu ứng sáng lóe cho sao sáng
+        if (star.size > 1.5 && Math.random() > 0.99) {
+          const glowSize = star.size * (2 + Math.sin(Date.now() * 0.01) * 0.5);
+          ctx.beginPath();
+          ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+          ctx.fillStyle = star.color;
+          ctx.globalAlpha = star.opacity * 0.2;
+          ctx.fill();
+          
+          // Thêm tia sáng
+          for (let i = 0; i < 4; i++) {
+            const rayAngle = (i * Math.PI) / 2 + Date.now() * 0.001;
+            const rayLength = star.size * 8;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(
+              x + Math.cos(rayAngle) * rayLength,
+              y + Math.sin(rayAngle) * rayLength
+            );
+            ctx.strokeStyle = star.color;
+            ctx.lineWidth = 0.5;
+            ctx.globalAlpha = star.opacity * 0.1;
+            ctx.stroke();
+          }
+        }
+        
+        // Cập nhật vị trí sao
+        star.x = x;
+        star.y = y;
       });
+      
+      // Vẽ trung tâm dải ngân hà sáng
+      const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 80);
+      coreGradient.addColorStop(0, `hsla(45, 100%, 80%, ${0.3 + Math.sin(Date.now() * 0.001) * 0.1})`);
+      coreGradient.addColorStop(0.5, `hsla(35, 80%, 60%, ${0.2 + Math.sin(Date.now() * 0.001) * 0.05})`);
+      coreGradient.addColorStop(1, 'hsla(25, 60%, 40%, 0)');
+      
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+      ctx.fillStyle = coreGradient;
+      ctx.fill();
+      
       ctx.globalAlpha = 1;
 
       // Draw stars
@@ -401,9 +501,6 @@
         if (star.x < 0 || star.x > w) star.dx *= -1;
         if (star.y < 0 || star.y > h) star.dy *= -1;
       }
-
-      const centerX = w / 2;
-      const centerY = h / 2;
 
       // Mặt trời với hiệu ứng nâng cao
       ctx.save();

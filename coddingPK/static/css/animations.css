@@ -1,0 +1,95 @@
+/* animations.css - Game animations */
+
+/* Panel transitions */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+/* Player movement animation */
+@keyframes playerMove {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Attack animation */
+@keyframes attack {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Shield pulse animation */
+@keyframes shieldPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(8, 170, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(8, 170, 255, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(8, 170, 255, 0.6);
+  }
+}
+
+/* Item float animation */
+@keyframes itemFloat {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Button pulse animation */
+@keyframes buttonPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

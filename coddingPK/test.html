@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mini PK Multiplayer Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: #0088cc;
+    }
+    
+    .test-section {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #222;
+      border-left: 4px solid #0088cc;
+    }
+    
+    .test-result {
+      margin-top: 5px;
+      padding: 5px;
+      font-family: monospace;
+    }
+    
+    .success {
+      color: #4f4;
+    }
+    
+    .failure {
+      color: #f44;
+    }
+    
+    button {
+      background: #0088cc;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+  
+  <!-- Firebase Dependencies -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  
+  <!-- Game Config -->
+  <script src="static/js/firebase/firebase-config.js"></script>
+  <script src="static/js/config/game-config.js"></script>
+</head>
+<body>
+  <h1>Mini PK Multiplayer Test Page</h1>
+  
+  <div class="test-section">
+    <h2>Firebase Configuration</h2>
+    <button id="test-firebase">Test Firebase Connection</button>
+    <div id="firebase-result" class="test-result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Game Configuration</h2>
+    <button id="test-config">Verify Game Config</button>
+    <div id="config-result" class="test-result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Module Imports</h2>
+    <button id="test-modules">Check Module Loading</button>
+    <div id="modules-result" class="test-result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Function Availability</h2>
+    <button id="test-functions">Check Functions</button>
+    <div id="functions-result" class="test-result"></div>
+  </div>
+  
+  <script>
+    // Test Firebase Connection
+    document.getElementById('test-firebase').addEventListener('click', function() {
+      const result = document.getElementById('firebase-result');
+      
+      try {
+        result.textContent = "Testing Firebase connection...";
+        result.className = "test-result";
+        
+        // Check if Firebase is initialized
+        if (!window.firebase) {
+          throw new Error("Firebase not loaded");
+        }
+        
+        // Check if database is available
+        if (!window.db) {
+          throw new Error("Firebase database not initialized");
+        }
+        
+        // Try to read something from the database
+        window.db.ref(".info/connected").once("value")
+          .then(snap => {
+            result.textContent = "Firebase connected successfully! Status: " + (snap.val() ? "Connected" : "Not connected");
+            result.className = "test-result success";
+          })
+          .catch(error => {
+            result.textContent = "Firebase error: " + error.message;
+            result.className = "test-result failure";
+          });
+          
+      } catch (error) {
+        result.textContent = "Error: " + error.message;
+        result.className = "test-result failure";
+      }
+    });
+    
+    // Verify Game Config
+    document.getElementById('test-config').addEventListener('click', function() {
+      const result = document.getElementById('config-result');
+      
+      try {
+        result.textContent = "Checking game config...";
+        result.className = "test-result";
+        
+        // Check weapons
+        if (!window.WEAPONS || !Array.isArray(window.WEAPONS)) {
+          throw new Error("WEAPONS constant not found or not an array");
+        }
+        
+        // Check characters
+        if (!window.CHARACTERS) {
+          throw new Error("CHARACTERS constant not found");
+        }
+        
+        // Check maps
+        if (!window.MAPS || !Array.isArray(window.MAPS)) {
+          throw new Error("MAPS constant not found or not an array");
+        }
+        
+        // Success
+        result.textContent = "Game configuration loaded successfully! " +
+          "Found " + window.WEAPONS.length + " weapons, " +
+          Object.keys(window.CHARACTERS).length + " characters, and " +
+          window.MAPS.length + " maps.";
+        result.className = "test-result success";
+        
+      } catch (error) {
+        result.textContent = "Error: " + error.message;
+        result.className = "test-result failure";
+      }
+    });
+    
+    // Check Module Loading
+    document.getElementById('test-modules').addEventListener('click', function() {
+      const result = document.getElementById('modules-result');
+      
+      try {
+        result.textContent = "Checking modules...";
+        result.className = "test-result";
+        
+        // Create a list of expected modules
+        const modules = [
+          { name: "firebase/database.js", check: () => window.db !== undefined },
+          { name: "ui/panels.js", check: () => typeof window.showPanel === 'function' },
+          { name: "ui/rooms-ui.js", check: () => typeof window.loadRoomList === 'function' },
+          { name: "game/rooms.js", check: () => typeof window.setupRoomAutoCleanup === 'function' },
+          { name: "game/player.js", check: () => typeof window.initializePlayer === 'function' },
+          { name: "game/bullets.js", check: () => typeof window.bulletsListener === 'function' },
+          { name: "game/renderer.js", check: () => typeof window.renderPlayers === 'function' },
+          { name: "game/items.js", check: () => typeof window.handleItemSpawning === 'function' },
+          { name: "game/game-loop.js", check: () => typeof window.gameLoop === 'function' },
+          { name: "auth.js", check: () => typeof window.initAuthHandlers === 'function' },
+          { name: "main.js", check: () => typeof window.MiniPK === 'object' }
+        ];
+        
+        // Check each module
+        const missing = modules.filter(module => !module.check());
+        
+        if (missing.length === 0) {
+          result.textContent = "All modules loaded successfully!";
+          result.className = "test-result success";
+        } else {
+          result.textContent = "Missing modules: " + missing.map(m => m.name).join(", ");
+          result.className = "test-result failure";
+        }
+        
+      } catch (error) {
+        result.textContent = "Error: " + error.message;
+        result.className = "test-result failure";
+      }
+    });
+    
+    // Check Functions
+    document.getElementById('test-functions').addEventListener('click', function() {
+      const result = document.getElementById('functions-result');
+      
+      try {
+        result.textContent = "Checking functions...";
+        result.className = "test-result";
+        
+        // Create a list of expected functions
+        const functions = [
+          { name: "showPanel", global: true },
+          { name: "loadRoomList", global: true },
+          { name: "joinRoom", global: true },
+          { name: "leaveRoom", global: true },
+          { name: "deleteRoom", global: true },
+          { name: "bulletsListener", global: true },
+          { name: "renderPlayers", global: true },
+          { name: "renderItems", global: true },
+          { name: "initializePlayer", global: true },
+          { name: "gameLoop", global: true },
+          { name: "getCurrentUserName", global: true }
+        ];
+        
+        // Check each function
+        const missing = functions.filter(func => {
+          if (func.global) {
+            return typeof window[func.name] !== 'function';
+          } else {
+            return false; // Not checking non-global functions
+          }
+        });
+        
+        if (missing.length === 0) {
+          result.textContent = "All required functions available!";
+          result.className = "test-result success";
+        } else {
+          result.textContent = "Missing functions: " + missing.map(f => f.name).join(", ");
+          result.className = "test-result failure";
+        }
+        
+      } catch (error) {
+        result.textContent = "Error: " + error.message;
+        result.className = "test-result failure";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini PK Multiplayer</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="static/css/style.css" />
+  <link rel="stylesheet" href="static/css/main.css" />
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -92,22 +93,39 @@
     </div>
 
     <h2>Chọn phòng</h2>
-    <div class="map-select">
-      <div class="map-option" data-map="classic">
-        <h3>Classic Arena</h3>
-        <p>Bản đồ cơ bản với 3 chướng ngại vật</p>
-      </div>
-      <div class="map-option" data-map="desert">
-        <h3>Desert Storm</h3>
-        <p>Sa mạc với địa hình rộng</p>
-      </div>
-      <div class="map-option" data-map="ice">
-        <h3>Ice Field</h3>
-        <p>Băng giá với nhiều chướng ngại vật</p>
-      </div>
-    </div>
     <button id="create-room-btn">Tạo phòng mới</button>
     <div id="room-list"></div>
+  </div>
+  
+  <div id="map-selection-panel" style="display:none">
+    <h2>Chọn bản đồ</h2>
+    <div class="map-options-container">
+      <div class="map-option" data-map="classic">
+        <div class="map-preview classic"></div>
+        <div class="map-info">
+          <h3>Classic Arena</h3>
+          <p>Bản đồ cơ bản với 3 chướng ngại vật</p>
+        </div>
+      </div>
+      <div class="map-option" data-map="desert">
+        <div class="map-preview desert"></div>
+        <div class="map-info">
+          <h3>Desert Storm</h3>
+          <p>Sa mạc với địa hình rộng</p>
+        </div>
+      </div>
+      <div class="map-option" data-map="ice">
+        <div class="map-preview ice"></div>
+        <div class="map-info">
+          <h3>Ice Field</h3>
+          <p>Băng giá với nhiều chướng ngại vật</p>
+        </div>
+      </div>
+    </div>
+    <div class="map-buttons">
+      <button id="confirm-map-btn">Tạo phòng</button>
+      <button id="cancel-map-btn">Quay lại</button>
+    </div>
   </div>
   <div id="game-ui" style="display:none">
     <div id="room-info" style="margin-bottom: 10px;">
@@ -200,7 +218,37 @@
     </div>
   </div>
 
-  <script src="firebase-config.js"></script>
-  <script src="game.js"></script>
+  <!-- Firebase -->
+  <script src="static/js/firebase/firebase-config.js"></script>
+  
+  <!-- Game Configuration -->
+  <script src="static/js/config/game-config.js"></script>
+  
+  <!-- Firebase Services -->
+  <script src="static/js/firebase/database.js"></script>
+  
+  <!-- UI Components -->
+  <script src="static/js/ui/panels.js"></script>
+  <script src="static/js/ui/rooms-ui.js"></script>
+  
+  <!-- Game Core -->
+  <script src="static/js/game/rooms.js"></script>
+  <script src="static/js/game/player.js"></script>
+  <script src="static/js/game/bullets.js"></script>
+  <script src="static/js/game/renderer.js"></script>
+  <script src="static/js/game/items.js"></script>
+  <script src="static/js/game/game-loop.js"></script>
+  
+  <!-- Authentication -->
+  <script src="static/js/auth/auth.js"></script>
+  
+  <!-- Main Game Logic -->
+  <script src="static/js/game/game.js"></script>
+  
+  <!-- Debug Tools -->
+  <script src="static/js/debug.js"></script>
+  
+  <!-- Main Entry Point -->
+  <script src="static/js/main.js"></script>
 </body>
 </html>

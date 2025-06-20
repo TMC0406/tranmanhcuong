@@ -1,0 +1,18 @@
+/* main.css - Main stylesheet imports */
+
+/* Import base styles */
+@import url('base.css');
+
+/* Import UI component styles */
+@import url('ui-panels.css');
+@import url('ui-modals.css');
+@import url('ui-characters.css');
+@import url('ui-rooms.css');
+
+/* Import game elements styles */
+@import url('game-players.css');
+@import url('game-items.css');
+@import url('game-effects.css');
+
+/* Import animations */
+@import url('animations.css');

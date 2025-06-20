@@ -1,0 +1,101 @@
+/* CSS Reset và base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure clean panel display */
+#login-panel, #room-panel, #map-selection-panel, #game-ui {
+  width: 100%;
+  position: relative;
+  margin: 0 auto;
+  clear: both;
+}
+
+/* Remove any conflicting transforms */
+#login-panel *, #room-panel *, #game-ui * {
+  transform-origin: center center;
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select, textarea {
+  transition: all 0.3s ease;
+}
+
+/* Fix button hover flickering */
+button, .google-btn {
+  will-change: transform, box-shadow, background;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Anti-flickering for pseudo-elements */
+button::before, .google-btn::before {
+  will-change: left;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Focus styles */
+button:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(0, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+  text-align: center;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+  animation: backgroundShift 10s ease-in-out infinite;
+}
+
+@keyframes backgroundShift {
+  0%, 100% { 
+    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  }
+  25% { 
+    background: linear-gradient(135deg, #16213e 0%, #0c0c0c 50%, #1a1a2e 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0c0c0c 100%);
+  }
+  75% { 
+    background: linear-gradient(135deg, #0c0c0c 0%, #16213e 50%, #1a1a2e 100%);
+  }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: orbMove 15s ease-in-out infinite;
+}
+
+@keyframes orbMove {
+  0%, 100% {
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+  }
+}

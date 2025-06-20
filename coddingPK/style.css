@@ -1,3 +1,53 @@
+/* CSS Reset và base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure clean panel display */
+#login-panel, #room-panel, #game-ui {
+  width: 100%;
+  position: relative;
+  margin: 0 auto;
+  clear: both;
+}
+
+/* Remove any conflicting transforms */
+#login-panel *, #room-panel *, #game-ui * {
+  transform-origin: center center;
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select, textarea {
+  transition: all 0.3s ease;
+}
+
+/* Fix button hover flickering */
+button, .google-btn {
+  will-change: transform, box-shadow, background;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Anti-flickering for pseudo-elements */
+button::before, .google-btn::before {
+  will-change: left;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Focus styles */
+button:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(0, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
 body {
   margin: 0;
   background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
@@ -397,10 +447,12 @@ button {
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 button::before {
@@ -410,8 +462,9 @@ button::before {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: left 0.6s;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+  pointer-events: none;
 }
 
 button:hover::before {
@@ -419,12 +472,113 @@ button:hover::before {
 }
 
 button:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
 }
 
 button:active {
   transform: translateY(-1px) scale(1.01);
+}
+
+/* Login buttons container */
+.login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+/* Google login button */
+.google-btn {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #ea4335 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(66, 133, 244, 0.2);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.google-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.google-btn:hover::before {
+  left: 100%;
+}
+
+.google-btn:hover {
+  background: linear-gradient(135deg, #3367d6 0%, #2d8a47 50%, #d33b2c 100%);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(66, 133, 244, 0.4);
+}
+
+.google-btn:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.google-icon {
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Prevent text selection and improve hover stability */
+button, .google-btn {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Stable hover states */
+button:hover, .google-btn:hover {
+  will-change: transform, box-shadow;
+}
+
+/* Responsive design for login buttons */
+@media (max-width: 480px) {
+  .login-buttons {
+    gap: 12px;
+  }
+  
+  .google-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  #login-btn {
+    width: 100%;
+    max-width: 280px;
+  }
 }
 
 /* Neon border effect for containers */
@@ -561,4 +715,838 @@ button:active {
 
 .floating:nth-child(3) {
   animation-delay: -4s;
+}
+
+/* Panel display controls - Override all animations when hidden */
+#login-panel, #character-selection-panel, #room-panel, #game-ui {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#login-panel[style*="display: none"], 
+#character-selection-panel[style*="display: none"],
+#room-panel[style*="display: none"], 
+#game-ui[style*="display: none"] {
+  display: none !important;
+  opacity: 0 !important;
+  transform: translateY(-50px) !important;
+  animation: none !important;
+  visibility: hidden !important;
+}
+
+/* Show panels with animation */
+#login-panel:not([style*="display: none"]), 
+#character-selection-panel:not([style*="display: none"]),
+#room-panel:not([style*="display: none"]), 
+#game-ui:not([style*="display: none"]) {
+  display: block !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  visibility: visible !important;
+}
+
+/* Additional panel transition controls */
+.panel-transition {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.4s ease-out;
+}
+
+.panel-transition.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Ensure only one panel is visible at a time */
+body > div {
+  position: relative;
+  z-index: 1;
+}
+
+body > div[style*="display: none"] {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Fix for current selection positioning */
+.current-selection {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 15px;
+  border-radius: 12px;
+  border: 2px solid rgba(0, 255, 255, 0.4);
+  z-index: 100;
+  min-width: 220px;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.current-selection h4 {
+  color: #00ffff;
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+}
+
+.selection-item {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(68, 68, 68, 0.8) 0%, rgba(34, 34, 34, 0.8) 100%);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selection-item:hover {
+  background: linear-gradient(135deg, rgba(85, 85, 85, 0.9) 0%, rgba(51, 51, 51, 0.9) 100%);
+  border-color: #00ffff;
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(0, 255, 255, 0.2);
+}
+
+/* Selection info styles */
+.selection-info {
+  flex: 1;
+  margin-left: 15px;
+  text-align: left;
+}
+
+.selection-info .name {
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #00ffff;
+  margin-bottom: 4px;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+.selection-info .stats {
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+/* Selection preview styles */
+.selection-preview {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  font-size: 20px;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Change button styles */
+.change-btn {
+  padding: 6px 12px;
+  margin-left: 10px;
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.3) 0%, rgba(0, 180, 255, 0.3) 100%);
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+  color: #ffffff;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.change-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.5) 0%, rgba(0, 180, 255, 0.5) 100%);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Character selection panel styles */
+#character-selection-panel {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 30px;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+  border-radius: 20px;
+  border: 2px solid;
+  border-image: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff) 1;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+#character-selection-panel:not([style*="display: none"]) {
+  animation: slideInUp 0.8s ease-out;
+}
+
+#character-selection-panel h2 {
+  color: #00ffff;
+  margin-bottom: 25px;
+  font-size: 2.3em;
+  font-weight: 700;
+  text-shadow: 
+    0 0 10px rgba(0, 255, 255, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.3);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+#continue-btn {
+  padding: 18px 50px;
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #58d68d 100%);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-top: 25px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    0 4px 10px rgba(46, 204, 113, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+#continue-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s;
+}
+
+#continue-btn:hover::before {
+  left: 100%;
+}
+
+#continue-btn:hover {
+  background: linear-gradient(135deg, #2ecc71 0%, #58d68d 50%, #85d8a3 100%);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(46, 204, 113, 0.5);
+}
+
+#continue-btn:active {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Enhanced Login panel styles - Simple login only */
+#login-panel {
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 40px;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+  border-radius: 20px;
+  border: 2px solid;
+  border-image: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff) 1;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+#login-panel:not([style*="display: none"]) {
+  animation: slideInUp 0.8s ease-out;
+}
+
+#login-panel h2 {
+  color: #00ffff;
+  margin-bottom: 30px;
+  font-size: 2.5em;
+  font-weight: 700;
+  text-shadow: 
+    0 0 10px rgba(0, 255, 255, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.3);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+#username-input {
+  width: 80%;
+  max-width: 350px;
+  padding: 15px 20px;
+  margin-bottom: 30px;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 18px;
+  text-align: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+#username-input:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.4),
+    inset 0 0 10px rgba(0, 255, 255, 0.1);
+  transform: scale(1.02);
+}
+
+#username-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#login-btn {
+  padding: 15px 40px;
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #58d68d 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    0 4px 10px rgba(46, 204, 113, 0.3);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 280px;
+}
+
+#login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s;
+}
+
+#login-btn:hover::before {
+  left: 100%;
+}
+
+#login-btn:hover {
+  background: linear-gradient(135deg, #2ecc71 0%, #58d68d 50%, #85d8a3 100%);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.4),
+    0 6px 15px rgba(46, 204, 113, 0.5);
+}
+
+#login-btn:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* FORCE OVERRIDE - Login panel must be clean */
+#login-panel * {
+  all: revert;
+}
+
+#login-panel {
+  display: block !important;
+  max-width: 500px !important;
+  margin: 50px auto !important;
+  padding: 40px !important;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%) !important;
+  border-radius: 20px !important;
+  text-align: center !important;
+}
+
+#login-panel h2 {
+  display: block !important;
+  color: #00ffff !important;
+  margin-bottom: 30px !important;
+  font-size: 2.5em !important;
+}
+
+#login-panel input {
+  display: block !important;
+  width: 80% !important;
+  margin: 0 auto 30px auto !important;
+  padding: 15px 20px !important;
+}
+
+#login-panel button {
+  display: inline-block !important;
+  padding: 15px 40px !important;
+}
+
+/* FORCE HIDE everything else in login panel */
+#login-panel .character-select,
+#login-panel .weapon-select,
+#login-panel .character-grid,
+#login-panel .weapon-grid,
+#login-panel .character-option,
+#login-panel .weapon-option {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* EMERGENCY FIX: Hide everything except login panel when on login */
+body:has(#login-panel:not([style*="display: none"])) > div:not(#login-panel),
+body:has(#login-panel:not([style*="display: none"])) > *:not(#login-panel):not(script) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+}
+
+/* Alternative approach if CSS :has() not supported */
+.login-mode #character-selection-panel,
+.login-mode #room-panel,
+.login-mode #game-ui,
+.login-mode .character-modal,
+.login-mode .weapon-modal {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Show only login panel in login mode */
+.login-mode #login-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+/* Force hide any loose character/weapon selection elements */
+.character-select:not(#character-selection-panel .character-select),
+.weapon-select:not(#character-selection-panel .weapon-select) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Character and Weapon Selection Styles */
+.character-select, .weapon-select {
+  margin: 25px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+}
+
+.character-select h3, .weapon-select h3 {
+  color: #00ffff;
+  font-size: 1.5em;
+  margin-bottom: 15px;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.character-grid, .weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.character-option, .weapon-option {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.character-option:hover, .weapon-option:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(255, 0, 255, 0.1) 100%);
+  border-color: #00ffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+}
+
+.character-option.selected, .weapon-option.selected {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.3) 0%, rgba(255, 0, 255, 0.2) 100%);
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.char-preview, .weapon-preview {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 10px auto;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #333, #555);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.char-preview.warrior {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+.char-preview.warrior::before {
+  content: "⚔️";
+}
+
+.char-preview.scout {
+  background: linear-gradient(135deg, #00d2d3, #01a3a4);
+}
+
+.char-preview.scout::before {
+  content: "🏃";
+}
+
+.char-preview.mage {
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+}
+
+.char-preview.mage::before {
+  content: "🧙";
+}
+
+.weapon-preview.pistol {
+  background: linear-gradient(135deg, #74b9ff, #0984e3);
+}
+
+.weapon-preview.pistol::before {
+  content: "🔫";
+}
+
+.weapon-preview.shotgun {
+  background: linear-gradient(135deg, #fd79a8, #e84393);
+}
+
+.weapon-preview.shotgun::before {
+  content: "💥";
+}
+
+.weapon-preview.rifle {
+  background: linear-gradient(135deg, #fdcb6e, #e17055);
+}
+
+.weapon-preview.rifle::before {
+  content: "🎯";
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .character-grid, .weapon-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  #character-selection-panel {
+    margin: 10px;
+    padding: 20px;
+  }
+}
+
+/* Debug and ensure character selection displays properly */
+#character-selection-panel .character-select,
+#character-selection-panel .weapon-select,
+#character-selection-panel .character-grid,
+#character-selection-panel .weapon-grid,
+#character-selection-panel .character-option,
+#character-selection-panel .weapon-option {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+#character-selection-panel .character-grid,
+#character-selection-panel .weapon-grid {
+  display: grid !important;
+}
+
+/* Selection Modal Styles */
+.selection-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+}
+
+.selection-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+  padding: 30px;
+  border-radius: 20px;
+  border: 2px solid;
+  border-image: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff) 1;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  max-width: 600px;
+  width: 80%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideInScale 0.3s ease;
+  position: relative;
+  z-index: 1100;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInScale {
+  from { 
+    transform: scale(0.8) translateY(50px);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content h3 {
+  color: #00ffff;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.modal-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.modal-buttons button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #00ff88, #00cc66);
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: linear-gradient(135deg, #00cc66, #00aa55);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+}
+
+.cancel-btn {
+  background: linear-gradient(135deg, #ff4757, #c44569);
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: linear-gradient(135deg, #c44569, #a53e54);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(196, 69, 105, 0.4);
+}
+
+/* Hide all modals by default */
+#character-modal,
+#weapon-modal {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: fixed !important;
+  z-index: -1 !important;
+}
+
+/* Show modal only when explicitly shown */
+#character-modal.show,
+#weapon-modal.show {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+}
+
+/* ULTIMATE FIX: Absolutely hide modals unless explicitly shown */
+#character-modal:not(.show),
+#weapon-modal:not(.show) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  z-index: -999 !important;
+}
+
+/* Only show modal content when modal has .show class */
+#character-modal:not(.show) *,
+#weapon-modal:not(.show) * {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Show everything inside modal when modal is shown */
+#character-modal.show *,
+#weapon-modal.show * {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Fix grid display for modal content */
+#character-modal.show .modal-grid,
+#weapon-modal.show .modal-grid {
+  display: grid !important;
+}
+
+/* Prevent any duplicate display issues */
+body {
+  position: relative;
+}
+
+/* Ensure clean separation between main content and modals */
+#character-selection-panel,
+#room-panel,
+#game-ui {
+  position: relative;
+  z-index: 1;
+}
+
+/* Modals should be on top layer */
+/* Ensure no content bleeds between panels */
+#login-panel,
+#character-selection-panel,
+#room-panel,
+#game-ui {
+  isolation: isolate;
+}
+
+/* Force modal backdrop to cover everything */
+.selection-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+/* Enhance modal styling for character/weapon options */
+#character-modal .character-option,
+#weapon-modal .weapon-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, rgba(40, 40, 55, 0.8) 0%, rgba(30, 30, 45, 0.8) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+#character-modal .character-option:hover,
+#weapon-modal .weapon-option:hover {
+  background: linear-gradient(135deg, rgba(60, 60, 80, 0.8) 0%, rgba(45, 45, 65, 0.8) 100%);
+  border-color: rgba(0, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 255, 255, 0.2);
+}
+
+#character-modal .character-option.selected,
+#weapon-modal .weapon-option.selected {
+  background: linear-gradient(135deg, rgba(0, 120, 120, 0.5) 0%, rgba(0, 80, 100, 0.5) 100%);
+  border-color: rgba(0, 255, 255, 0.8);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+#character-modal .char-preview,
+#weapon-modal .weapon-preview {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+#character-modal h4,
+#weapon-modal h4 {
+  margin: 8px 0 5px;
+  font-size: 1.1rem;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+#character-modal p,
+#weapon-modal p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+/* Enhance modal buttons */
+.modal-buttons {
+  margin-top: 25px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
 }

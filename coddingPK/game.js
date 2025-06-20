@@ -97,20 +97,81 @@ let isDead = false;  // Thêm biến này
 let shield = 0; // Số lớp giáp hiện tại
 const MAX_SHIELD = 5;
 
-// Ẩn/hiện UI
+// Ẩn/hiện UI với animation control
 function showPanel(panel) {
-  document.getElementById("login-panel").style.display = panel === "login" ? "block" : "none";
-  document.getElementById("room-panel").style.display = panel === "room" ? "block" : "none";
-  document.getElementById("game-ui").style.display = panel === "game" ? "block" : "none";
+  const loginPanel = document.getElementById("login-panel");
+  const characterPanel = document.getElementById("character-selection-panel");
+  const roomPanel = document.getElementById("room-panel");
+  const gameUI = document.getElementById("game-ui");
+  
+  // Set body class for CSS targeting
+  document.body.className = '';
+  if (panel === "login") {
+    document.body.classList.add("login-mode");
+  } else if (panel === "character") {
+    document.body.classList.add("character-mode");
+  } else if (panel === "room") {
+    document.body.classList.add("room-mode");
+  } else if (panel === "game") {
+    document.body.classList.add("game-mode");
+  }
+  
+  // Hide all panels first
+  loginPanel.style.display = "none";
+  characterPanel.style.display = "none";
+  roomPanel.style.display = "none";
+  gameUI.style.display = "none";
+  
+  // Remove any existing animations
+  loginPanel.style.animation = "none";
+  characterPanel.style.animation = "none";
+  roomPanel.style.animation = "none";
+  gameUI.style.animation = "none";
+  
+  // Force a reflow to ensure styles are applied
+  loginPanel.offsetHeight;
+  characterPanel.offsetHeight;
+  roomPanel.offsetHeight;
+  gameUI.offsetHeight;
+  
+  // Show the requested panel with animation
+  setTimeout(() => {
+    if (panel === "login") {
+      loginPanel.style.display = "block";
+      loginPanel.style.animation = "slideInUp 0.6s ease-out";
+    } else if (panel === "character") {
+      characterPanel.style.display = "block";
+      characterPanel.style.animation = "slideInUp 0.6s ease-out";
+    } else if (panel === "room") {
+      roomPanel.style.display = "block";
+      roomPanel.style.animation = "slideInUp 0.6s ease-out";
+    } else if (panel === "game") {
+      gameUI.style.display = "block";
+      gameUI.style.animation = "slideInUp 0.6s ease-out";
+    }
+  }, 50);
 }
 showPanel("login");
 
-// Đăng nhập và chọn nhân vật
+// Đăng nhập
 const loginBtn = document.getElementById("login-btn");
 loginBtn.onclick = () => {
   const name = document.getElementById("username-input").value.trim();
   if (!name) return alert("Vui lòng nhập tên!");
   
+  userName = name;
+  showPanel("character");
+};
+
+// Google login button
+const googleLoginBtn = document.getElementById("google-login-btn");
+if (googleLoginBtn) {
+  googleLoginBtn.onclick = googleLogin;
+}
+
+// Tiếp tục sau khi chọn nhân vật và vũ khí
+const continueBtn = document.getElementById("continue-btn");
+continueBtn.onclick = () => {
   // Validate character and weapon selection
   selectedCharacter = document.querySelector('.character-option.selected')?.dataset.char || 'warrior';
   selectedWeapon = document.querySelector('.weapon-option.selected')?.dataset.weapon || 'pistol';
@@ -119,7 +180,6 @@ loginBtn.onclick = () => {
     return alert("Vui lòng chọn nhân vật và vũ khí!");
   }
   
-  userName = name;
   showPanel("room");
   loadRoomList();
   
@@ -1194,29 +1254,61 @@ function renderBullets() {
 
 // Thêm event listeners cho việc chọn character và weapon
 document.addEventListener('DOMContentLoaded', () => {
-  // Character selection
-  const characterOptions = document.querySelectorAll('.character-option');
-  characterOptions.forEach(option => {
-    option.addEventListener('click', () => {
-      // Bỏ selected từ tất cả character options
-      characterOptions.forEach(opt => opt.classList.remove('selected'));
-      // Thêm selected cho option được chọn
-      option.classList.add('selected');
-      selectedCharacter = option.dataset.char || 'warrior';
+  // Character selection - both in character panel and modals
+  const setupCharacterSelection = () => {
+    const characterOptions = document.querySelectorAll('.character-option');
+    characterOptions.forEach(option => {
+      option.onclick = () => {
+        // Remove selected from all options in the same container
+        const container = option.closest('.character-grid') || option.closest('.modal-grid');
+        if (container) {
+          container.querySelectorAll('.character-option').forEach(opt => opt.classList.remove('selected'));
+        }
+        // Add selected to clicked option
+        option.classList.add('selected');
+        
+        // Update selection
+        if (option.closest('.selection-modal')) {
+          tempSelectedCharacter = option.dataset.char;
+        } else {
+          selectedCharacter = option.dataset.char || 'warrior';
+        }
+      };
     });
-  });
+  };
 
-  // Weapon selection
-  const weaponOptions = document.querySelectorAll('.weapon-option');
-  weaponOptions.forEach(option => {
-    option.addEventListener('click', () => {
-      // Bỏ selected từ tất cả weapon options
-      weaponOptions.forEach(opt => opt.classList.remove('selected'));
-      // Thêm selected cho option được chọn
-      option.classList.add('selected');
-      selectedWeapon = option.dataset.weapon || 'pistol';
+  // Weapon selection - both in weapon panel and modals
+  const setupWeaponSelection = () => {
+    const weaponOptions = document.querySelectorAll('.weapon-option');
+    weaponOptions.forEach(option => {
+      option.onclick = () => {
+        // Remove selected from all options in the same container
+        const container = option.closest('.weapon-grid') || option.closest('.modal-grid');
+        if (container) {
+          container.querySelectorAll('.weapon-option').forEach(opt => opt.classList.remove('selected'));
+        }
+        // Add selected to clicked option
+        option.classList.add('selected');
+        
+        // Update selection
+        if (option.closest('.selection-modal')) {
+          tempSelectedWeapon = option.dataset.weapon;
+        } else {
+          selectedWeapon = option.dataset.weapon || 'pistol';
+        }
+      };
     });
-  });
+  };
+
+  // Initialize selections
+  setupCharacterSelection();
+  setupWeaponSelection();
+  
+  // Re-setup when content changes
+  setTimeout(() => {
+    setupCharacterSelection();
+    setupWeaponSelection();
+  }, 100);
 });
 
 // Thêm đăng nhập Google Firebase
@@ -1225,8 +1317,7 @@ function googleLogin() {
   firebase.auth().signInWithPopup(provider)
     .then(result => {
       userName = result.user.displayName || result.user.email || "Người chơi";
-      showPanel("room");
-      loadRoomList();
+      showPanel("character");
     })
     .catch(err => {
       console.log('Google login error:', err);
@@ -1234,20 +1325,20 @@ function googleLogin() {
     });
 }
 
-// Thêm nút Google vào login-panel
-const googleBtn = document.createElement("button");
-googleBtn.innerText = "Đăng nhập với Google";
-googleBtn.onclick = googleLogin;
-document.getElementById("login-panel").appendChild(googleBtn);
+// Kết nối nút Google với function
+document.addEventListener('DOMContentLoaded', () => {
+  const googleBtn = document.getElementById('google-login-btn');
+  if (googleBtn) {
+    googleBtn.onclick = googleLogin;
+  }
+});
 
 // Tự động nhận diện đăng nhập Google nếu đã đăng nhập trước đó
 firebase.auth().onAuthStateChanged(user => {
-  if (user) {
+  if (user && !userName) {
     userName = user.displayName || user.email || "Người chơi";
-    showPanel("room");
-    loadRoomList();
-  } else {
-    showPanel("login");
+    // Nếu đã đăng nhập Google, chuyển thẳng đến character selection
+    showPanel("character");
   }
 });
 
@@ -1309,7 +1400,7 @@ let tempSelectedWeapon = null;
 
 function openCharacterModal() {
   const modal = document.getElementById('character-modal');
-  modal.style.display = 'flex';
+  modal.classList.add('show');
   tempSelectedCharacter = selectedCharacter;
   
   // Update modal character options
@@ -1331,7 +1422,7 @@ function openCharacterModal() {
 
 function closeCharacterModal() {
   const modal = document.getElementById('character-modal');
-  modal.style.display = 'none';
+  modal.classList.remove('show');
   tempSelectedCharacter = null;
 }
 
@@ -1354,7 +1445,7 @@ function confirmCharacterChange() {
 
 function openWeaponModal() {
   const modal = document.getElementById('weapon-modal');
-  modal.style.display = 'flex';
+  modal.classList.add('show');
   tempSelectedWeapon = selectedWeapon;
   
   // Update modal weapon options
@@ -1376,7 +1467,7 @@ function openWeaponModal() {
 
 function closeWeaponModal() {
   const modal = document.getElementById('weapon-modal');
-  modal.style.display = 'none';
+  modal.classList.remove('show');
   tempSelectedWeapon = null;
 }
 

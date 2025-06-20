@@ -349,9 +349,25 @@
       }
     }
     function getScale() {
-      if (window.innerWidth < 600) return 0.35;
-      if (window.innerWidth < 900) return 0.6;
-      return 1;
+      // Tính toán tỷ lệ thích ứng theo kích thước màn hình
+      // để đảm bảo tất cả hành tinh đều hiển thị, bao gồm cả hành tinh xa nhất (Neptune)
+      
+      // Lấy bán kính quỹ đạo của hành tinh xa nhất (Neptune)
+      const largestOrbitRadius = 220 * 5; // Neptune's orbit radius
+      
+      // Thêm margin để đảm bảo không chạm cạnh màn hình
+      const margin = 20; 
+      
+      // Tính toán scale dựa trên kích thước màn hình và bán kính quỹ đạo lớn nhất
+      // Nhân 1.1 để tính thêm khoảng cách an toàn
+      const scaleByWidth = (window.innerWidth / 2 - margin) / (largestOrbitRadius * 1.1);
+      const scaleByHeight = (window.innerHeight / 2 - margin) / (largestOrbitRadius * 1.1);
+      
+      // Chọn scale nhỏ hơn để đảm bảo vừa với cả chiều rộng và chiều cao
+      const baseScale = Math.min(scaleByWidth, scaleByHeight);
+      
+      // Giới hạn scale trong khoảng hợp lý
+      return Math.max(0.3, Math.min(baseScale, 1));
     }
 
     function draw() {

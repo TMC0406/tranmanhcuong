@@ -12,10 +12,16 @@
 </head>
 <body>
   <div id="login-panel">
-    <h2>Đăng nhập</h2>
+    <h2 id="auth-title">Đăng nhập</h2>
+    <input id="email-input" type="email" placeholder="Email của bạn" />
+    <input id="password-input" type="password" placeholder="Mật khẩu" />
     <input id="username-input" placeholder="Nhập tên của bạn" maxlength="16" />
+    <div class="auth-toggle">
+      <span id="login-text">Chưa có tài khoản?</span>
+      <a href="#" id="toggle-auth-mode">Đăng ký ngay</a>
+    </div>
     <div class="login-buttons">
-      <button id="login-btn">Đăng nhập</button>
+      <button id="auth-btn">Đăng nhập</button>
       <button id="google-login-btn" class="google-btn">
         <span class="google-icon">🌐</span>
         Đăng nhập với Google

@@ -8,6 +8,9 @@
 // Set up global game namespace to prevent polluting the window object
 window.MiniPK = window.MiniPK || {};
 
+// Before DOM is loaded, hide all panels to prevent flash
+document.write('<style>body > div { display: none; }</style>');
+
 // Initialize modules when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Initializing Mini PK Multiplayer game...');
@@ -21,10 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set up game event listeners
   setupEventListeners();
   
-  // Start with login panel
-  if (window.showPanel) {
-    window.showPanel('login');
-  }
+  // Check if user is already logged in before showing any panel
+  checkAuthAndShowPanel();
   
   console.log('Game initialization complete');
 });
@@ -140,6 +141,46 @@ function setupEventListeners() {
       // This can be expanded later for responsive design
     }
   });
+}
+
+/**
+ * Check authentication state and show the appropriate panel
+ */
+function checkAuthAndShowPanel() {
+  console.log('Checking authentication state...');
+  
+  // Add loading indication
+  document.body.classList.add('loading');
+  
+  if (window.checkAuthState) {
+    // Use a loading indicator while checking auth state
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'auth-loading';
+    loadingIndicator.innerHTML = '<div class="spinner"></div><p>Đang tải...</p>';
+    document.body.appendChild(loadingIndicator);
+    
+    window.checkAuthState((isLoggedIn, username) => {
+      console.log('Auth state checked:', isLoggedIn ? 'Logged in as ' + username : 'Not logged in');
+      
+      // Remove loading indicator
+      if (document.getElementById('auth-loading')) {
+        document.body.removeChild(document.getElementById('auth-loading'));
+      }
+      document.body.classList.remove('loading');
+      
+      // Show the appropriate panel based on auth state
+      if (isLoggedIn) {
+        window.showPanel('character');
+      } else {
+        window.showPanel('login');
+      }
+    });
+  } else {
+    // If auth checking is not available, default to login panel
+    console.warn('Authentication check function not available');
+    window.showPanel('login');
+    document.body.classList.remove('loading');
+  }
 }
 
 // Make main initialization functions available globally if needed

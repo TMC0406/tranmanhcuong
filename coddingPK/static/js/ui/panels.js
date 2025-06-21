@@ -11,7 +11,7 @@ function showPanel(panel) {
   const mapSelectionPanel = document.getElementById("map-selection-panel");
   const gameUI = document.getElementById("game-ui");
   
-  // Set body class for CSS targeting
+  // Set body class for CSS targeting and ensure we clear previous classes
   document.body.className = '';
   if (panel === "login") {
     document.body.classList.add("login-mode");
@@ -25,7 +25,9 @@ function showPanel(panel) {
     document.body.classList.add("game-mode");
   }
   
-  // Hide all panels first
+  console.log("Showing panel:", panel);
+  
+  // Hide all panels first - explicit display:none
   loginPanel.style.display = "none";
   characterPanel.style.display = "none";
   roomPanel.style.display = "none";
@@ -45,6 +47,9 @@ function showPanel(panel) {
   roomPanel.offsetHeight;
   mapSelectionPanel.offsetHeight;
   gameUI.offsetHeight;
+  
+  // Add flag to track that panels have been explicitly shown
+  window.panelShown = true;
   
   // Show the requested panel with animation
   setTimeout(() => {
